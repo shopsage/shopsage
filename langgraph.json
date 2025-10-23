@@ -1,0 +1,9 @@
+{
+  "dependencies": [
+    "./google_shopping_scraper"
+  ],
+  "graphs": {
+    "supplier_research_agent": "./google_shopping_scraper/agent.py:graph"
+  },
+  "env": ".env"
+}
