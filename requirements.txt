@@ -8,6 +8,7 @@ langgraph-checkpoint-sqlite>=1.0.0
 
 # API Clients
 google-search-results>=2.4.2
+praw==7.8.1
 
 # Data validation and processing
 pydantic>=2.0.0
@@ -24,6 +25,7 @@ uvicorn>=0.27.0
 numpy>=1.26.0
 python-dateutil>=2.8.2
 typing-extensions>=4.0.0
+rich==14.2.0
 
 # Optional: for better string matching
 python-Levenshtein>=0.21.0
