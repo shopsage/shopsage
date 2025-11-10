@@ -15,7 +15,7 @@ Your task is to analyze a user's request and extract the important information i
 
 If you really cannot extract certain aspects of the user's request, you can either choose to ignore it or make it more generic. Ensure that your gennerated query does not have too much information because this will affect the search result. Summarise your query as best as you can, and you are allowed to skip over the more minor keywords.
 Your answer should be a JSON object with this following information:
-- query: The reddit search optimised query, ready to be passed straight into praw for scraping the reddit website.
+- query: The reddit search optimised query, ready to be passed straight into praw for scraping the reddit website, and the google serach optimised query.
 - confidence: Your confidence in the extraction (0-1)
 
 Return your response as a JSON object with these exact keys.
@@ -25,26 +25,29 @@ Examples:
 
 Query: "I need headphones with good ANC that are under $300"
 Response: {
-    "query": "headphones under $300 with good ANC self:yes",
+    "reddit_query": "headphones under $300 with good ANC self:yes",
+    "google_query": "headphones under $300 with goood ANC",
     "confidence": 0.9
 }
 
 Query: "What's the best all-around laptop for a college student? Needs to have good battery life and be pretty lightweight for carrying around campus. Budget is flexible but not extreme."
 Response: {
-    "query": "best laptop college student lightweight good battery life self:yes",
+    "reddit_query": "best laptop college student lightweight good battery life self:yes",
+    "google_query": "best laptop college student lightweight good battery life",
     "confidence": 0.7
 }
 
 Query: "I want to buy my first espresso machine for under $500. I'm stuck between the Breville Bambino and the Gaggia Classic Pro. Which one is better for a beginner?"
 Response: {
-    "query": "Breville Bambino vs Gaggia Classic Pro beginner espresso machine under $500 self:yes",
+    "reddit_query": "Breville Bambino vs Gaggia Classic Pro beginner espresso machine under $500 self:yes",
+    "google_query": "Breville Bambino vs Gaggia Classic Pro beginner espresso machine under $500"
     "confidence": 0.6
 }
 
 Query: "I'm looking for a new pair of trail running shoes for rocky terrain. There are too many options... how do brands like Hoka compare to Salomon or Altra for durability?"
-Response: 
 Response: {
-    "query": "trail running shoes Hoka vs Salomon vs Altra self:yes",
+    "reddit_query": "trail running shoes Hoka vs Salomon vs Altra self:yes",
+    "google_query": "trail running shoes Hoka vs Salomon vs Altra"
     "confidence": 0.2
 }
 """
@@ -66,7 +69,8 @@ Response: {
             processed_query = json.loads(response_clean)
 
             required_fields = [
-                "query",
+                "reddit_query",
+                "google_query",
                 "confidence"
             ]
             for field in required_fields:
@@ -74,9 +78,10 @@ Response: {
                     processed_query[field] = None
             error = None
         
-        except json.JSONDecoder as e:
+        except json.JSONDecodeError as e:
             processed_query = {
-                "query": user_query,
+                "reddit_query": user_query,
+                "google_query": user_query,
                 "confidence": 0.0
             }
             error = f"Failed to parse LLM response as JSON: {str(e)}"
@@ -84,7 +89,7 @@ Response: {
         processing_time = (time.time() - start_time) * 1000
 
         return {
-            "reddit_query": processed_query,
+            "query": processed_query,
             "errors": state.get("errors", []) + [error] if error else state.get("errors", []),
             "current_step": "query_processed",
             "processing_times": {
@@ -98,10 +103,10 @@ Response: {
 
         error_msg = f"Query processing failed: {str(e)}"
 
-        fallback_query = {"query": user_query, "confidence": 0.0}
+        fallback_query = {"reddit_query": user_query, "google_query": user_query, "confidence": 0.0}
 
         return {
-            "reddit_query": fallback_query,
+            "query": fallback_query,
             "errors": state.get("errors", []) + [error_msg],
             "current_step": "query_processed_failed",
             "processing_times": {

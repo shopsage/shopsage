@@ -1,9 +1,12 @@
+import asyncio
 from langgraph.graph import StateGraph, END
 from product_research_scraper.state import AgentState, create_initial_state
 from product_research_scraper.nodes.query_processor import process_reddit_query
-from product_research_scraper.nodes.search import search_reddit
+from product_research_scraper.nodes.reddit_search import search_reddit
+from product_research_scraper.nodes.google_search import search_google
+from product_research_scraper.nodes.evaluator import evaluate_user_query
 
-
+# sort by comment and likes
 def create_product_research_graph():
     """
     Create the LangGraph for product research
@@ -16,13 +19,18 @@ def create_product_research_graph():
     """
     workflow = StateGraph(AgentState)
 
-    # TODO: add the summary and evaluation nodes
     workflow.add_node("process_query", process_reddit_query)
     workflow.add_node("search_reddit", search_reddit)
+    workflow.add_node("search_google", search_google)
+    workflow.add_node("evaluate_query", evaluate_user_query)
 
     workflow.set_entry_point("process_query")
     workflow.add_edge("process_query", "search_reddit")
-    workflow.add_edge("search_reddit", END)
+    workflow.add_edge("process_query", "search_google")
+    
+    workflow.add_edge(["search_reddit", "search_google"], "evaluate_query")
+    
+    workflow.add_edge("evaluate_query", END)
 
     graph = workflow.compile()
 
@@ -33,7 +41,7 @@ def create_product_research_graph():
 graph = create_product_research_graph()
 
 
-def run_research_agent(
+async def run_research_agent(
     query: str, config: dict = None
 ) -> dict:
     """
@@ -55,7 +63,7 @@ def run_research_agent(
     if config is None:
         config = {"configurable": {"thread_id": "default"}}
 
-    final_state = graph.invoke(initial_state, config)
+    final_state = await graph.ainvoke(initial_state, config)
 
     return final_state
 
@@ -64,5 +72,5 @@ if __name__ == "__main__":
         from rich.pretty import pprint as print
     except:
         pass
-    result = run_research_agent("What are good wired headphones I can buy for gaming?")
+    result = asyncio.run(run_research_agent("What are good wired headphones I can buy for gaming?"))
     print(result)
