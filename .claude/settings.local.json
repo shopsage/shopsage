@@ -3,7 +3,8 @@
     "allow": [
       "Bash(mkdir:*)",
       "Bash(find:*)",
-      "Bash(python:*)"
+      "Bash(python:*)",
+      "Bash(git -C /Users/mchao/Docs/Acad/SUTD/Capstone/Code/shopsage diff --name-status HEAD)"
     ],
     "deny": [],
     "ask": []
