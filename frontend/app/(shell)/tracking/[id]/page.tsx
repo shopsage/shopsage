@@ -83,14 +83,14 @@ export default function TrackingDetailPage() {
 
   // Format data for Recharts
   const chartData = prices
-    .sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime())
+    .sort((a, b) => a.date.getTime() - b.date.getTime())
     .map((point) => ({
-      timestamp: new Date(point.timestamp).toLocaleDateString("en-US", {
+      timestamp: new Date(point.date).toLocaleDateString("en-US", {
         month: "short",
         day: "numeric",
       }),
       price: point.price,
-      date: point.timestamp,
+      date: point.date,
     }));
 
   const minPrice = Math.min(...chartData.map((d) => d.price));
@@ -103,8 +103,8 @@ export default function TrackingDetailPage() {
     <div>
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">{item.modelName}</h1>
-        {item.sku && <p className="text-gray-600">SKU: {item.sku}</p>}
+        <h1 className="text-3xl font-bold mb-2">{item.listing.title}</h1>
+        {item.listing.description && <p className="text-gray-600">{item.listing.description}</p>}
       </div>
 
       {/* Price summary cards */}
@@ -174,25 +174,30 @@ export default function TrackingDetailPage() {
         )}
       </div>
 
-      {/* Listings section */}
-      {item.listingIds && item.listingIds.length > 0 && (
-        <div className="card p-6">
-          <h2 className="text-lg font-semibold mb-4">Tracked Listings</h2>
-          <div className="space-y-2">
-            {item.listingIds.map((listingId) => (
-              <div
-                key={listingId}
-                className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50"
-              >
-                <p className="text-sm text-gray-600">Listing ID: {listingId}</p>
-                <p className="text-xs text-gray-400 mt-1">
-                  TODO: Fetch and display listing details
-                </p>
-              </div>
-            ))}
+      {/* Listing info section */}
+      <div className="card p-6 mb-8">
+        <h2 className="text-lg font-semibold mb-4">Product Information</h2>
+        <div className="space-y-2">
+          <div className="flex justify-between">
+            <span className="text-gray-600">Seller:</span>
+            <span className="font-medium">{item.listing.seller}</span>
           </div>
+          {item.listing.sellerRating && (
+            <div className="flex justify-between">
+              <span className="text-gray-600">Seller Rating:</span>
+              <span className="font-medium">{item.listing.sellerRating} / 5.0</span>
+            </div>
+          )}
+          {item.listing.url && (
+            <div className="flex justify-between">
+              <span className="text-gray-600">Link:</span>
+              <a href={item.listing.url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline text-sm">
+                View on site
+              </a>
+            </div>
+          )}
         </div>
-      )}
+      </div>
 
       {/* TODO: Alerts section */}
       <div className="mt-8 text-gray-500 text-sm p-4 bg-gray-50 rounded-lg border border-gray-200">

@@ -6,11 +6,17 @@ import { getClient } from "@/lib/adapters";
 import type { Conversation } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { InputGroup, InputGroupContent, InputGroupButton } from "@/components/ui/input-group";
 import { Separator } from "@/components/ui/separator";
-import { Badge } from "@/components/ui/badge";
 import { Send, Plus, MessageSquare } from "lucide-react";
+
+const getConversationTitle = (conv: Conversation): string => {
+  if (conv.messages.length > 0) {
+    const firstMessage = conv.messages[0].content;
+    return firstMessage.substring(0, 50) + (firstMessage.length > 50 ? "..." : "");
+  }
+  return "Conversation";
+};
 
 export default function SearchPage() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -138,21 +144,24 @@ export default function SearchPage() {
                 No conversations yet. Start one!
               </p>
             ) : (
-              conversations.map((conv) => (
-                <button
-                  key={conv.id}
-                  onClick={() => handleSelectConversation(conv)}
-                  className={`w-full text-left px-3 py-2 rounded-md transition-all text-sm truncate flex items-center gap-2 ${
-                    activeConversation?.id === conv.id
-                      ? "bg-shopsage-orange text-white shadow-md"
-                      : "hover:bg-shopsage-light-peach text-dark"
-                  }`}
-                  title={conv.title}
-                >
-                  <MessageSquare className="w-4 h-4 flex-shrink-0" />
-                  {conv.title}
-                </button>
-              ))
+              conversations.map((conv) => {
+                const title = getConversationTitle(conv);
+                return (
+                  <button
+                    key={conv.id}
+                    onClick={() => handleSelectConversation(conv)}
+                    className={`w-full text-left px-3 py-2 rounded-md transition-all text-sm truncate flex items-center gap-2 ${
+                      activeConversation?.id === conv.id
+                        ? "bg-shopsage-orange text-white shadow-md"
+                        : "hover:bg-shopsage-light-peach text-dark"
+                    }`}
+                    title={title}
+                  >
+                    <MessageSquare className="w-4 h-4 flex-shrink-0" />
+                    {title}
+                  </button>
+                );
+              })
             )}
           </div>
         </div>
@@ -164,7 +173,7 @@ export default function SearchPage() {
           <>
             {/* Chat Header */}
             <div className="p-4 bg-gradient-to-r from-primary-500 to-primary-600 border-b border-primary-200">
-              <h1 className="text-xl font-bold text-white">{activeConversation.title}</h1>
+              <h1 className="text-xl font-bold text-white">{getConversationTitle(activeConversation)}</h1>
               <p className="text-sm text-primary-100 mt-1">
                 {messages.length} messages
               </p>
@@ -201,48 +210,6 @@ export default function SearchPage() {
                       }}
                     >
                       <p className="text-sm">{msg.content}</p>
-                      {msg.responseCards && msg.responseCards.length > 0 && (
-                        <div className="mt-4 space-y-3">
-                          {msg.responseCards.map((card) => (
-                            <Card
-                              key={card.id}
-                              className="bg-white border border-shopsage-cool shadow-none hover:shadow-md transition-shadow"
-                            >
-                              <CardHeader className="pb-2">
-                                <div className="flex items-start justify-between">
-                                  <CardTitle className="text-sm text-dark">
-                                    {card.title}
-                                  </CardTitle>
-                                  {card.modelName && (
-                                    <Badge variant="secondary" className="text-xs">
-                                      {card.modelName}
-                                    </Badge>
-                                  )}
-                                </div>
-                              </CardHeader>
-                              <CardContent className="pb-3">
-                                <p className="text-xs text-gray-600 line-clamp-2">
-                                  {card.description}
-                                </p>
-                                {card.pros && card.pros.length > 0 && (
-                                  <div className="mt-2">
-                                    <p className="text-xs font-semibold text-shopsage-orange mb-1">
-                                      Pros:
-                                    </p>
-                                    <ul className="text-xs text-gray-600 list-disc list-inside space-y-0.5">
-                                      {card.pros.slice(0, 2).map((pro, i) => (
-                                        <li key={i} className="line-clamp-1">
-                                          {pro}
-                                        </li>
-                                      ))}
-                                    </ul>
-                                  </div>
-                                )}
-                              </CardContent>
-                            </Card>
-                          ))}
-                        </div>
-                      )}
                     </div>
                   </div>
                 ))

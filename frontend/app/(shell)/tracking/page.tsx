@@ -89,59 +89,39 @@ export default function TrackingPage() {
               href={`/tracking/${item.id}`}
               className="card p-6 hover:shadow-lg"
             >
-              <h3 className="text-lg font-semibold mb-2">{item.modelName}</h3>
+              <h3 className="text-lg font-semibold mb-2">{item.listing.title}</h3>
 
-              {item.sku && (
-                <p className="text-sm text-gray-500 mb-3">SKU: {item.sku}</p>
+              {item.listing.seller && (
+                <p className="text-sm text-gray-500 mb-3">Seller: {item.listing.seller}</p>
               )}
 
               <div className="space-y-2 mb-4">
-                {item.currentPrice && (
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Current Price:</span>
-                    <span className="font-semibold">
-                      ${item.currentPrice.toFixed(2)}
-                    </span>
-                  </div>
-                )}
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Price:</span>
+                  <span className="font-semibold">
+                    ${item.listing.price.toFixed(2)}
+                  </span>
+                </div>
 
-                {item.lowestPrice && (
+                {item.listing.sellerRating && (
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Lowest Price:</span>
+                    <span className="text-gray-600">Seller Rating:</span>
                     <span className="text-secondary">
-                      ${item.lowestPrice.toFixed(2)}
+                      {item.listing.sellerRating} / 5.0
                     </span>
                   </div>
                 )}
 
-                {item.highestPrice && (
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Highest Price:</span>
-                    <span className="text-accent">
-                      ${item.highestPrice.toFixed(2)}
-                    </span>
-                  </div>
-                )}
-
-                {item.priceChangePercent !== undefined && (
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Change:</span>
-                    <span
-                      className={
-                        item.priceChangePercent < 0
-                          ? "text-secondary"
-                          : "text-red-600"
-                      }
-                    >
-                      {item.priceChangePercent > 0 ? "+" : ""}
-                      {item.priceChangePercent.toFixed(1)}%
-                    </span>
-                  </div>
-                )}
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Status:</span>
+                  <span className="text-accent capitalize">
+                    {item.status}
+                  </span>
+                </div>
               </div>
 
               <div className="text-xs text-gray-400">
-                {item.listingIds?.length || 0} listings tracked
+                Added {new Date(item.createdAt).toLocaleDateString()}
               </div>
             </Link>
           ))}

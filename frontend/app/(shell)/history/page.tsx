@@ -103,7 +103,11 @@ export default function HistoryPage() {
               <Link href="/search">
                 <div className="flex justify-between items-start">
                   <div className="flex-1">
-                    <h3 className="text-lg font-semibold mb-2">{conv.title}</h3>
+                    <h3 className="text-lg font-semibold mb-2">
+                      {conv.messages.length > 0
+                        ? conv.messages[0].content.substring(0, 60) + (conv.messages[0].content.length > 60 ? "..." : "")
+                        : "Conversation"}
+                    </h3>
                     <p className="text-sm text-gray-600 mb-2">
                       {conv.agent === "product" ? "🔍 Product Research" : "🛒 Supplier Research"}
                     </p>

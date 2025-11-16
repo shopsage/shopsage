@@ -4,7 +4,13 @@
       "Bash(mkdir:*)",
       "Bash(find:*)",
       "Bash(python:*)",
-      "Bash(git -C /Users/mchao/Docs/Acad/SUTD/Capstone/Code/shopsage diff --name-status HEAD)"
+      "Bash(git -C /Users/mchao/Docs/Acad/SUTD/Capstone/Code/shopsage diff --name-status HEAD)",
+      "Bash(npm run build:*)",
+      "Bash(npm install)",
+      "Bash(ls:*)",
+      "Bash(/bin/ls:*)",
+      "Bash(git -C /Users/mchao/Docs/Acad/SUTD/Capstone/Code/shopsage status)",
+      "Bash(cat:*)"
     ],
     "deny": [],
     "ask": []
