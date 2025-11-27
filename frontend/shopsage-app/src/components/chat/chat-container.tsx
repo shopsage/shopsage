@@ -2,11 +2,13 @@
 
 import { useEffect, useRef } from "react";
 import { MessageBubble } from "./message-bubble";
+import { ThinkingIndicator } from "./thinking-indicator";
 import type { DemoMessage, TrackedItem } from "@/lib/mock-data";
 
 interface ChatContainerProps {
   messages: DemoMessage[];
   isTyping?: boolean;
+  thinkingStage?: "researching" | "analyzing" | "finding-prices" | "comparing" | "general";
   onPreferenceChange?: (groupLabel: string, value: string) => void;
   onConfirmSelection?: () => void;
   onPriceConfirm?: (price: number) => void;
@@ -16,6 +18,7 @@ interface ChatContainerProps {
 export function ChatContainer({
   messages,
   isTyping,
+  thinkingStage = "general",
   onPreferenceChange,
   onConfirmSelection,
   onPriceConfirm,
@@ -33,6 +36,24 @@ export function ChatContainer({
     }
   }, [messages, isTyping]);
 
+  const handleScrollToBottom = (options?: { force?: boolean; behavior?: ScrollBehavior }) => {
+    if (scrollRef.current) {
+      const { scrollHeight, scrollTop, clientHeight } = scrollRef.current;
+
+      // If force is true, use a larger threshold (e.g., 1000px) to account for large content appearing
+      // Otherwise use strict 100px threshold for typing
+      const threshold = options?.force ? 1000 : 100;
+      const isNearBottom = scrollHeight - scrollTop - clientHeight < threshold;
+
+      if (isNearBottom) {
+        scrollRef.current.scrollTo({
+          top: scrollHeight,
+          behavior: options?.behavior || "instant",
+        });
+      }
+    }
+  };
+
   return (
     <main
       ref={scrollRef}
@@ -47,6 +68,7 @@ export function ChatContainer({
         px-4
         pb-[160px]
         pt-[80px]
+        relative
       "
     >
       {messages.length === 0 && (
@@ -66,20 +88,12 @@ export function ChatContainer({
           onConfirmSelection={onConfirmSelection}
           onPriceConfirm={onPriceConfirm}
           onTrackProduct={onTrackProduct}
+          enableTypewriter={index === messages.length - 1 && message.role === "assistant"}
+          onScrollToBottom={handleScrollToBottom}
         />
       ))}
 
-      {isTyping && (
-        <div className="animate-slide-up text-left">
-          <div className="flex items-center gap-2">
-            <div className="flex gap-1">
-              <span className="h-2 w-2 animate-pulse rounded-full bg-neutral-400" style={{ animationDelay: "0s" }} />
-              <span className="h-2 w-2 animate-pulse rounded-full bg-neutral-400" style={{ animationDelay: "0.2s" }} />
-              <span className="h-2 w-2 animate-pulse rounded-full bg-neutral-400" style={{ animationDelay: "0.4s" }} />
-            </div>
-          </div>
-        </div>
-      )}
+      {isTyping && <ThinkingIndicator stage={thinkingStage} />}
     </main>
   );
 }

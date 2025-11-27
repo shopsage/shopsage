@@ -9,7 +9,7 @@ import { useTracking } from "@/hooks/use-tracking";
 import type { TrackedItem } from "@/lib/mock-data";
 
 export default function SearchPage() {
-  const { messages, sendMessage, confirmSelection, confirmPriceInput, updatePreferences, isTyping } = useDemoChat();
+  const { messages, sendMessage, confirmSelection, confirmPriceInput, updatePreferences, isTyping, thinkingStage } = useDemoChat();
   const { addItem } = useTracking();
   const [input, setInput] = useState("");
 
@@ -35,6 +35,7 @@ export default function SearchPage() {
       <ChatContainer
         messages={messages}
         isTyping={isTyping}
+        thinkingStage={thinkingStage}
         onPreferenceChange={updatePreferences}
         onConfirmSelection={confirmSelection}
         onPriceConfirm={confirmPriceInput}

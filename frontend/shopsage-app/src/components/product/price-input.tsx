@@ -26,7 +26,7 @@ export function PriceInput({ defaultValue = 0, onConfirm }: PriceInputProps) {
         w-fit
         items-center
         gap-1
-        rounded-[30px]
+        rounded-xl
         border
         border-primary-200/50
         bg-surface-card

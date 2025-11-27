@@ -1,7 +1,6 @@
 "use client";
 
 import { Star } from "lucide-react";
-import { cn } from "@/lib/utils";
 import type { Product } from "@/lib/mock-data";
 
 interface ProductCardProps {
@@ -29,7 +28,7 @@ export function ProductCard({ product, onTrack }: ProductCardProps) {
       }}
     >
       {/* Image Area */}
-      <div className="relative mb-3 flex h-[140px] items-center justify-center rounded-xl bg-surface-bg">
+      <div className="relative mb-3 flex h-[140px] items-center justify-center overflow-hidden rounded-xl bg-white shadow-sm border border-neutral-100">
         {/* Badge */}
         {product.badge && (
           <div
@@ -38,6 +37,7 @@ export function ProductCard({ product, onTrack }: ProductCardProps) {
               absolute
               left-2
               top-2
+              z-10
               rounded-md
               px-2
               py-1
@@ -55,21 +55,30 @@ export function ProductCard({ product, onTrack }: ProductCardProps) {
           </div>
         )}
 
-        {/* Headphones Icon (CSS Art) */}
-        <div
-          className="
-            relative
-            h-[60%]
-            w-[60%]
-            rounded-full
-            border-2
-            border-neutral-600
-            border-b-transparent
-          "
-        >
-          <div className="absolute -left-1.5 bottom-0 h-5 w-3 rounded bg-neutral-600" />
-          <div className="absolute -right-1.5 bottom-0 h-5 w-3 rounded bg-neutral-600" />
-        </div>
+        {/* Product Image or Placeholder */}
+        {product.image ? (
+          <img
+            src={product.image}
+            alt={product.title}
+            className="h-full w-full object-contain p-2"
+          />
+        ) : (
+          /* Headphones Icon (CSS Art) Placeholder */
+          <div
+            className="
+              relative
+              h-[60%]
+              w-[60%]
+              rounded-full
+              border-2
+              border-neutral-600
+              border-b-transparent
+            "
+          >
+            <div className="absolute -left-1.5 bottom-0 h-5 w-3 rounded bg-neutral-600" />
+            <div className="absolute -right-1.5 bottom-0 h-5 w-3 rounded bg-neutral-600" />
+          </div>
+        )}
       </div>
 
       {/* Title */}

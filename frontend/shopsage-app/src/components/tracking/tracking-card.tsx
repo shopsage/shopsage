@@ -1,6 +1,6 @@
 "use client";
 
-import { Star, Trash2, ExternalLink } from "lucide-react";
+import { Star, ExternalLink, MoreHorizontal } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { TrackedItem } from "@/lib/mock-data";
 
@@ -60,25 +60,37 @@ export function TrackingCard({
             h-[100px]
             items-center
             justify-center
+            overflow-hidden
             rounded-xl
-            bg-surface-bg
+            bg-white
+            shadow-sm
+            border
+            border-neutral-100
           "
         >
-          <div
-            className="
-              relative
-              h-[60%]
-              w-[60%]
-              scale-[0.8]
-              rounded-full
-              border-2
-              border-neutral-600
-              border-b-transparent
-            "
-          >
-            <div className="absolute -left-1.5 bottom-0 h-5 w-3 rounded bg-neutral-600" />
-            <div className="absolute -right-1.5 bottom-0 h-5 w-3 rounded bg-neutral-600" />
-          </div>
+          {item.image ? (
+            <img
+              src={item.image}
+              alt={item.title}
+              className="h-full w-full object-contain p-2"
+            />
+          ) : (
+            <div
+              className="
+                relative
+                h-[60%]
+                w-[60%]
+                scale-[0.8]
+                rounded-full
+                border-2
+                border-neutral-600
+                border-b-transparent
+              "
+            >
+              <div className="absolute -left-1.5 bottom-0 h-5 w-3 rounded bg-neutral-600" />
+              <div className="absolute -right-1.5 bottom-0 h-5 w-3 rounded bg-neutral-600" />
+            </div>
+          )}
         </div>
       )}
 
@@ -94,24 +106,36 @@ export function TrackingCard({
               flex-shrink-0
               items-center
               justify-center
+              overflow-hidden
               rounded-xl
-              bg-surface-bg
+              bg-white
+              shadow-sm
+              border
+              border-neutral-100
             "
           >
-            <div
-              className="
-                relative
-                h-[70%]
-                w-[70%]
-                rounded-full
-                border-2
-                border-neutral-600
-                border-b-transparent
-              "
-            >
-              <div className="absolute -left-1 bottom-0 h-3 w-2 rounded-sm bg-neutral-600" />
-              <div className="absolute -right-1 bottom-0 h-3 w-2 rounded-sm bg-neutral-600" />
-            </div>
+            {item.image ? (
+              <img
+                src={item.image}
+                alt={item.title}
+                className="h-full w-full object-contain p-1"
+              />
+            ) : (
+              <div
+                className="
+                  relative
+                  h-[70%]
+                  w-[70%]
+                  rounded-full
+                  border-2
+                  border-neutral-600
+                  border-b-transparent
+                "
+              >
+                <div className="absolute -left-1 bottom-0 h-3 w-2 rounded-sm bg-neutral-600" />
+                <div className="absolute -right-1 bottom-0 h-3 w-2 rounded-sm bg-neutral-600" />
+              </div>
+            )}
           </div>
         )}
 
@@ -126,30 +150,36 @@ export function TrackingCard({
             {item.title}
           </h3>
 
-          {!isCompact && (
-            <div className="mt-1 flex items-center gap-1 text-xs text-neutral-500">
-              <Star className="h-3 w-3 fill-warning text-warning" />
-              <span>{item.rating}</span>
-              <span>({item.reviewCount})</span>
-              <span className="mx-1">·</span>
-              <span>{item.platform}</span>
-            </div>
-          )}
-
           {/* Price Info */}
-          <div className={cn("flex items-end justify-between", isCompact ? "mt-2" : "mt-3")}>
-            <div className="text-base font-bold text-neutral-800">
-              ${item.currentPrice}
+          <div className={cn("flex flex-col gap-1", isCompact ? "mt-2" : "mt-3")}>
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-neutral-500">Target Price</span>
+              <span className="text-base font-bold text-neutral-800">${item.targetPrice}</span>
             </div>
-            <div
-              className={cn(
-                "text-[11px] font-semibold",
-                isAtTarget ? "text-success" : "text-success"
-              )}
-            >
-              Target: ${item.targetPrice}
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-neutral-500">Current Price</span>
+              <span
+                className={cn(
+                  "text-base font-bold",
+                  isAtTarget ? "text-success" : "text-neutral-800"
+                )}
+              >
+                ${item.currentPrice}
+              </span>
             </div>
           </div>
+
+          {!isCompact && (
+            <div className="mt-3 flex items-center gap-2 text-xs text-neutral-500">
+              <span className="font-medium text-neutral-700">{item.platform}</span>
+              <span>·</span>
+              <div className="flex items-center gap-1">
+                <Star className="h-3 w-3 fill-warning text-warning" />
+                <span>{item.rating}</span>
+                <span>({item.reviewCount} reviews)</span>
+              </div>
+            </div>
+          )}
 
           {/* Actions (Non-Compact) */}
           {!isCompact && onRemove && (
@@ -182,17 +212,18 @@ export function TrackingCard({
                   items-center
                   justify-center
                   rounded-lg
-                  bg-error-bg
+                  bg-surface-bg
                   px-3
                   py-2
-                  text-error
+                  text-neutral-400
                   transition-colors
                   duration-200
-                  hover:bg-error/10
+                  hover:bg-neutral-200
+                  hover:text-neutral-600
                 "
-                aria-label="Remove from tracking"
+                aria-label="More options"
               >
-                <Trash2 className="h-4 w-4" />
+                <MoreHorizontal className="h-5 w-5" />
               </button>
             </div>
           )}

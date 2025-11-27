@@ -21,6 +21,7 @@ export function useTracking(): UseTrackingReturn {
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setTrackedItems(JSON.parse(stored));
       } else {
         // Use mock data if nothing stored

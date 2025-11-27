@@ -1,0 +1,74 @@
+
+> shopsage-app@0.1.0 lint
+> eslint
+
+
+/Users/justinwong/Desktop/School/Capstone/shopsage/frontend/shopsage-app/src/components/chat/message-bubble.tsx
+   3:31  warning  'memo' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      @typescript-eslint/no-unused-vars
+  52:7   error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/Users/justinwong/Desktop/School/Capstone/shopsage/frontend/shopsage-app/src/components/chat/message-bubble.tsx:52:7
+  50 |   useEffect(() => {
+  51 |     if (message.content.length > 0) {
+> 52 |       setContentVisibility((prev) => {
+     |       ^^^^^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  53 |         const next = [...prev];
+  54 |         next[0] = true;
+  55 |         return next;  react-hooks/set-state-in-effect
+
+/Users/justinwong/Desktop/School/Capstone/shopsage/frontend/shopsage-app/src/components/product/product-card.tsx
+   4:10  warning  'cn' is defined but never used                                                                                                                                                                                                                                                           @typescript-eslint/no-unused-vars
+  61:11  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+/Users/justinwong/Desktop/School/Capstone/shopsage/frontend/shopsage-app/src/components/tracking/tracking-card.tsx
+    3:16  warning  'Trash2' is defined but never used                                                                                                                                                                                                                                                       @typescript-eslint/no-unused-vars
+   72:13  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+  118:15  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+/Users/justinwong/Desktop/School/Capstone/shopsage/frontend/shopsage-app/src/hooks/use-demo-chat.ts
+  94:6  warning  '_price' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/justinwong/Desktop/School/Capstone/shopsage/frontend/shopsage-app/src/hooks/use-tracking.ts
+  24:9  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/Users/justinwong/Desktop/School/Capstone/shopsage/frontend/shopsage-app/src/hooks/use-tracking.ts:24:9
+  22 |       const stored = localStorage.getItem(STORAGE_KEY);
+  23 |       if (stored) {
+> 24 |         setTrackedItems(JSON.parse(stored));
+     |         ^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  25 |       } else {
+  26 |         // Use mock data if nothing stored
+  27 |         setTrackedItems(mockTrackedItems);  react-hooks/set-state-in-effect
+
+/Users/justinwong/Desktop/School/Capstone/shopsage/frontend/shopsage-app/src/hooks/use-typewriter.ts
+  34:7  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/Users/justinwong/Desktop/School/Capstone/shopsage/frontend/shopsage-app/src/hooks/use-typewriter.ts:34:7
+  32 |     // If not enabled, show full text immediately
+  33 |     if (!enabled) {
+> 34 |       setDisplayedText(text);
+     |       ^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  35 |       setIsComplete(true);
+  36 |       animatedTextRef.current = text;
+  37 |       isAnimationCompleteRef.current = true;  react-hooks/set-state-in-effect
+
+✖ 10 problems (3 errors, 7 warnings)
+

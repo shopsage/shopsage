@@ -3,6 +3,8 @@
 import { useState, useCallback } from "react";
 import { demoScript, DemoMessage, PreferenceGroup } from "@/lib/mock-data";
 
+type ThinkingStage = "researching" | "analyzing" | "finding-prices" | "comparing" | "general";
+
 interface UseDemoChatReturn {
   messages: DemoMessage[];
   sendMessage: (text: string) => void;
@@ -10,6 +12,7 @@ interface UseDemoChatReturn {
   confirmPriceInput: (price: number) => void;
   updatePreferences: (groupLabel: string, value: string) => void;
   isTyping: boolean;
+  thinkingStage: ThinkingStage;
   reset: () => void;
 }
 
@@ -17,6 +20,22 @@ export function useDemoChat(): UseDemoChatReturn {
   const [currentStep, setCurrentStep] = useState(0);
   const [messages, setMessages] = useState<DemoMessage[]>([]);
   const [isTyping, setIsTyping] = useState(false);
+  const [thinkingStage, setThinkingStage] = useState<ThinkingStage>("general");
+
+  // Helper function to determine thinking stage based on user message
+  const determineThinkingStage = (messageText: string): ThinkingStage => {
+    const lowerText = messageText.toLowerCase();
+    if (lowerText.includes("looking for") || lowerText.includes("find") || lowerText.includes("search")) {
+      return "researching";
+    } else if (lowerText.includes("price") || lowerText.includes("cost") || lowerText.includes("cheap")) {
+      return "finding-prices";
+    } else if (lowerText.includes("compare") || lowerText.includes("better") || lowerText.includes("which")) {
+      return "comparing";
+    } else if (lowerText.includes("track")) {
+      return "analyzing";
+    }
+    return "general";
+  };
 
   // Update a preference selection within the current messages
   const updatePreferences = useCallback((groupLabel: string, value: string) => {
@@ -59,13 +78,12 @@ export function useDemoChat(): UseDemoChatReturn {
 
     // Go straight to the next assistant response (skip user message)
     if (assistantMessageIndex < demoScript.length) {
-      setIsTyping(true);
-
-      setTimeout(() => {
-        setMessages((prev) => [...prev, demoScript[assistantMessageIndex]]);
-        setIsTyping(false);
-        setCurrentStep((prev) => prev + 1);
-      }, 800);
+      // No thinking animation for this step
+      setMessages((prev) => [
+        ...prev,
+        { ...demoScript[assistantMessageIndex], timestamp: new Date() },
+      ]);
+      setCurrentStep((prev) => prev + 1);
     } else {
       setCurrentStep((prev) => prev + 1);
     }
@@ -73,7 +91,7 @@ export function useDemoChat(): UseDemoChatReturn {
 
   // Confirm price input and advance the conversation (skip user message)
   const confirmPriceInput = useCallback(
-    (_price: number) => {
+    () => {
       // Calculate which messages to show next
       const userMessageIndex = currentStep * 2;
       const assistantMessageIndex = userMessageIndex + 1;
@@ -84,13 +102,12 @@ export function useDemoChat(): UseDemoChatReturn {
 
       // Go straight to the next assistant response (skip user message)
       if (assistantMessageIndex < demoScript.length) {
-        setIsTyping(true);
-
-        setTimeout(() => {
-          setMessages((prev) => [...prev, demoScript[assistantMessageIndex]]);
-          setIsTyping(false);
-          setCurrentStep((prev) => prev + 1);
-        }, 800);
+        // No thinking animation for this step
+        setMessages((prev) => [
+          ...prev,
+          { ...demoScript[assistantMessageIndex], timestamp: new Date() },
+        ]);
+        setCurrentStep((prev) => prev + 1);
       } else {
         setCurrentStep((prev) => prev + 1);
       }
@@ -123,6 +140,7 @@ export function useDemoChat(): UseDemoChatReturn {
         id: `user-${Date.now()}`,
         role: "user",
         content: [{ type: "text", text }],
+        timestamp: new Date(),
       };
 
       setMessages((prev) => [...prev, userMessage]);
@@ -130,13 +148,17 @@ export function useDemoChat(): UseDemoChatReturn {
       // Check if there's an assistant response in the script
       if (assistantMessageIndex < demoScript.length) {
         setIsTyping(true);
+        setThinkingStage(determineThinkingStage(text));
 
         // Simulate typing delay
         setTimeout(() => {
-          setMessages((prev) => [...prev, demoScript[assistantMessageIndex]]);
+          setMessages((prev) => [
+            ...prev,
+            { ...demoScript[assistantMessageIndex], timestamp: new Date() },
+          ]);
           setIsTyping(false);
           setCurrentStep((prev) => prev + 1);
-        }, 800);
+        }, 1200);
       } else {
         setCurrentStep((prev) => prev + 1);
       }
@@ -148,6 +170,7 @@ export function useDemoChat(): UseDemoChatReturn {
     setCurrentStep(0);
     setMessages([]);
     setIsTyping(false);
+    setThinkingStage("general");
   }, []);
 
   return {
@@ -157,6 +180,7 @@ export function useDemoChat(): UseDemoChatReturn {
     confirmPriceInput,
     updatePreferences,
     isTyping,
+    thinkingStage,
     reset,
   };
 }

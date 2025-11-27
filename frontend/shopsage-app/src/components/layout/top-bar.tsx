@@ -2,7 +2,12 @@
 
 import { Menu } from "lucide-react";
 
+import { usePathname } from "next/navigation";
+
 export function TopBar() {
+  const pathname = usePathname();
+  const isTrackingPage = pathname === "/tracking";
+
   return (
     <header
       className="
@@ -21,7 +26,7 @@ export function TopBar() {
     >
       {/* Menu Button */}
       <button
-        className="
+        className={`
           -ml-2
           rounded-lg
           p-2
@@ -29,8 +34,10 @@ export function TopBar() {
           duration-200
           hover:bg-neutral-200/50
           focus-ring
-        "
+          ${isTrackingPage ? "invisible pointer-events-none" : ""}
+        `}
         aria-label="Menu"
+        disabled={isTrackingPage}
       >
         <Menu className="h-6 w-6 text-neutral-800" strokeWidth={2} />
       </button>
