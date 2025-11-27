@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { ProductCarousel } from "@/components/product/product-carousel";
 import { FilterChips } from "@/components/product/filter-chips";
 import { PriceInput } from "@/components/product/price-input";
@@ -52,77 +53,87 @@ export function MessageBubble({
     });
   }, []);
 
-
-
   return (
-    <div
+    <motion.div
+      initial={{ opacity: 0, y: 20, scale: 0.98 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{
+        duration: 0.4,
+        ease: [0.23, 1, 0.32, 1], // easeOutQuint
+        delay: animationDelay
+      }}
       className={cn(
-        "animate-slide-up w-full",
+        "w-full",
         isUser ? "text-right" : "text-left"
       )}
-      style={{ animationDelay: `${animationDelay}s` }}
     >
       <div className={cn("flex flex-col gap-3", isUser ? "items-end" : "items-start")}>
-        {message.content.map((content, index) => (
-          <div
-            key={index}
-            className={cn(
-              "w-full transition-all duration-500",
-              contentVisibility[index] || !enableTypewriter || isUser
-                ? "opacity-100 translate-y-0"
-                : "opacity-0 translate-y-2"
-            )}
-          >
-            <MessageContentRenderer
-              content={content}
-              isUser={isUser}
-              onPreferenceChange={onPreferenceChange}
-              onPriceConfirm={onPriceConfirm}
-              onTrackProduct={onTrackProduct}
-              enableTypewriter={enableTypewriter}
-              onContentComplete={() => handleContentComplete(index)}
-              onScrollToBottom={onScrollToBottom}
-              isVisible={contentVisibility[index] || !enableTypewriter || isUser}
-            />
-          </div>
-        ))}
+        {message.content.map((content, index) => {
+          const isVisible = contentVisibility[index] || !enableTypewriter || isUser;
+
+          if (!isVisible) return null;
+
+          return (
+            <motion.div
+              key={index}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, ease: "easeOut" }}
+              className="w-full"
+            >
+              <MessageContentRenderer
+                content={content}
+                isUser={isUser}
+                onPreferenceChange={onPreferenceChange}
+                onPriceConfirm={onPriceConfirm}
+                onTrackProduct={onTrackProduct}
+                enableTypewriter={enableTypewriter}
+                onContentComplete={() => handleContentComplete(index)}
+                onScrollToBottom={onScrollToBottom}
+                isVisible={isVisible}
+              />
+            </motion.div>
+          );
+        })}
 
         {/* Confirm button for preference selections */}
         {hasPreferences && onConfirmSelection && (
-          <div
-            className={cn(
-              "transition-all duration-500",
-              contentVisibility[message.content.length - 1]
-                ? "opacity-100 translate-y-0"
-                : "opacity-0 translate-y-2"
+          <AnimatePresence>
+            {contentVisibility[message.content.length - 1] && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 10 }}
+                transition={{ duration: 0.3 }}
+              >
+                <button
+                  onClick={() => onConfirmSelection()}
+                  className="
+                    flex
+                    items-center
+                    gap-2
+                    rounded-md
+                    bg-primary-500
+                    px-4
+                    py-2
+                    text-sm
+                    font-medium
+                    text-white
+                    transition-all
+                    duration-200
+                    hover:bg-primary-600
+                    active:scale-95
+                  "
+                  style={{ boxShadow: "0 2px 8px rgba(235, 94, 40, 0.3)" }}
+                >
+                  Continue
+                </button>
+              </motion.div>
             )}
-          >
-            <button
-              onClick={() => onConfirmSelection()}
-              className="
-                flex
-                items-center
-                gap-2
-                rounded-md
-                bg-primary-500
-                px-4
-                py-2
-                text-sm
-                font-medium
-                text-white
-                transition-all
-                duration-200
-                hover:bg-primary-600
-                active:scale-95
-              "
-              style={{ boxShadow: "0 2px 8px rgba(235, 94, 40, 0.3)" }}
-            >
-              Continue
-            </button>
-          </div>
+          </AnimatePresence>
         )}
       </div>
-    </div>
+    </motion.div>
   );
 }
 
@@ -251,20 +262,6 @@ interface TypewriterTextProps {
 }
 
 function TypewriterText({ text, isUser, enableTypewriter, onComplete, onScrollToBottom }: TypewriterTextProps) {
-  // We need to handle HTML tags for the typewriter effect.
-  // Strategy:
-  // 1. If typewriter is disabled, just render the HTML.
-  // 2. If enabled, we strip tags for the *animation state* calculation,
-  //    but we need to reconstruct the HTML for display.
-  //    Actually, a simpler approach for now to fix the "chunk of text" issue
-  //    is to replace <br> with newlines and strip other tags, OR use a library.
-  //    Given the constraints, let's try to preserve newlines at least.
-
-  // Better approach: Use the full text for display if not animating,
-  // and if animating, we need a way to show partial HTML.
-  // Since that's complex, let's just render the full HTML if animation is done/disabled.
-  // If animating, we can show the plain text version (with newlines) growing.
-
   const [isDone, setIsDone] = useState(!enableTypewriter);
 
   // Convert <br> to newlines for the plain text version so we get paragraphs

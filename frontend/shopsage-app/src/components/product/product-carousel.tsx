@@ -1,5 +1,6 @@
 "use client";
 
+import { motion } from "framer-motion";
 import { ProductCard } from "./product-card";
 import type { Product } from "@/lib/mock-data";
 
@@ -25,13 +26,16 @@ export function ProductCarousel({ products, onTrack }: ProductCarouselProps) {
         scrollSnapType: "x mandatory",
       }}
     >
-      {products.map((product) => (
-        <div
+      {products.map((product, index) => (
+        <motion.div
           key={product.id}
+          initial={{ opacity: 0, x: 50 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: index * 0.15, duration: 0.5, ease: "easeOut" }}
           style={{ scrollSnapAlign: "center" }}
         >
           <ProductCard product={product} onTrack={onTrack} />
-        </div>
+        </motion.div>
       ))}
     </div>
   );

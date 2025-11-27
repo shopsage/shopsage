@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import { MessageBubble } from "./message-bubble";
 import { ThinkingIndicator } from "./thinking-indicator";
 import type { DemoMessage, TrackedItem } from "@/lib/mock-data";
@@ -66,34 +67,47 @@ export function ChatContainer({
         overflow-y-auto
         scroll-smooth
         px-4
-        pb-[160px]
-        pt-[80px]
+        pb-[190px]
+        pt-[120px]
         relative
       "
     >
       {messages.length === 0 && (
-        <div className="flex flex-1 flex-col items-center justify-center text-center">
+        <div className="flex flex-1 flex-col items-center justify-center text-center -mt-16">
           <h2 className="px-8 text-3xl text-neutral-800" style={{ fontFamily: 'var(--font-serif)' }}>
             What are we looking for today?
           </h2>
         </div>
       )}
 
-      {messages.map((message, index) => (
-        <MessageBubble
-          key={message.id}
-          message={message}
-          animationDelay={index * 0.1}
-          onPreferenceChange={onPreferenceChange}
-          onConfirmSelection={onConfirmSelection}
-          onPriceConfirm={onPriceConfirm}
-          onTrackProduct={onTrackProduct}
-          enableTypewriter={index === messages.length - 1 && message.role === "assistant"}
-          onScrollToBottom={handleScrollToBottom}
-        />
-      ))}
+      <AnimatePresence mode="popLayout" initial={false}>
+        {messages.map((message, index) => (
+          <MessageBubble
+            key={message.id}
+            message={message}
+            animationDelay={index * 0.1}
+            onPreferenceChange={onPreferenceChange}
+            onConfirmSelection={onConfirmSelection}
+            onPriceConfirm={onPriceConfirm}
+            onTrackProduct={onTrackProduct}
+            enableTypewriter={index === messages.length - 1 && message.role === "assistant"}
+            onScrollToBottom={handleScrollToBottom}
+          />
+        ))}
 
-      {isTyping && <ThinkingIndicator stage={thinkingStage} />}
+        {isTyping && (
+          <motion.div
+            key="thinking-indicator"
+            initial={{ opacity: 0, y: 10, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 10, scale: 0.9 }}
+            transition={{ duration: 0.3 }}
+            className="w-full"
+          >
+            <ThinkingIndicator stage={thinkingStage} />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </main>
   );
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { Plus, ArrowUp } from "lucide-react";
-import { KeyboardEvent } from "react";
+import { KeyboardEvent, useRef, useEffect } from "react";
 
 interface ComposerProps {
   value: string;
@@ -16,6 +16,14 @@ export function Composer({
   onSend,
   placeholder = "Ask follow-up...",
 }: ComposerProps) {
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (inputRef.current) {
+      inputRef.current.scrollLeft = inputRef.current.scrollWidth;
+    }
+  }, [value]);
+
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
@@ -24,7 +32,7 @@ export function Composer({
   };
 
   return (
-    <div className="absolute bottom-[80px] left-0 right-0 z-40 px-4">
+    <div className="absolute bottom-[93px] left-0 right-0 z-40 px-4">
       <div
         className="
           flex
@@ -65,11 +73,12 @@ export function Composer({
           "
           aria-label="Attach"
         >
-          <Plus className="h-5 w-5" />
+          <Plus className="h-5 w-5" strokeWidth={1.5} />
         </button>
 
         {/* Input */}
         <input
+          ref={inputRef}
           type="text"
           value={value}
           onChange={(e) => onChange(e.target.value)}
@@ -113,7 +122,7 @@ export function Composer({
           }}
           aria-label="Send"
         >
-          <ArrowUp className="h-5 w-5" strokeWidth={2} />
+          <ArrowUp className="h-5 w-5" strokeWidth={2.5} />
         </button>
       </div>
     </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Check } from "lucide-react";
 
 interface PriceInputProps {
@@ -10,6 +10,10 @@ interface PriceInputProps {
 
 export function PriceInput({ defaultValue = 0, onConfirm }: PriceInputProps) {
   const [value, setValue] = useState(defaultValue.toString());
+
+  useEffect(() => {
+    setValue(defaultValue.toString());
+  }, [defaultValue]);
 
   const handleConfirm = () => {
     const price = parseFloat(value);
@@ -88,7 +92,7 @@ export function PriceInput({ defaultValue = 0, onConfirm }: PriceInputProps) {
         "
         aria-label="Set Price"
       >
-        <Check className="h-4 w-4" strokeWidth={3} />
+        <Check className="h-4 w-4" strokeWidth={2.5} />
       </button>
     </div>
   );

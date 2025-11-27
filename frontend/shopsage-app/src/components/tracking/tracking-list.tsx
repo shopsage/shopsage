@@ -25,7 +25,7 @@ export function TrackingList({ items, onRemove }: TrackingListProps) {
             bg-neutral-200
           "
         >
-          <Package className="h-8 w-8 text-neutral-500" />
+          <Package className="h-8 w-8 text-neutral-500" strokeWidth={1.5} />
         </div>
         <h3 className="mb-2 text-base font-semibold text-neutral-800">
           No products tracked yet

@@ -18,7 +18,7 @@ export function AssistantAvatar() {
         boxShadow: "0 4px 8px rgba(235, 94, 40, 0.25)",
       }}
     >
-      <ShoppingBag className="h-4 w-4 text-white" />
+      <ShoppingBag className="h-4 w-4 text-white" strokeWidth={1.5} />
     </div>
   );
 }

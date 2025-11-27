@@ -14,6 +14,7 @@ interface UseDemoChatReturn {
   isTyping: boolean;
   thinkingStage: ThinkingStage;
   reset: () => void;
+  setPriceInputValue: (price: number) => void;
 }
 
 export function useDemoChat(): UseDemoChatReturn {
@@ -25,8 +26,9 @@ export function useDemoChat(): UseDemoChatReturn {
   // Helper function to determine thinking stage based on user message
   const determineThinkingStage = (messageText: string): ThinkingStage => {
     const lowerText = messageText.toLowerCase();
+    // Initial search query should just show dots (general)
     if (lowerText.includes("looking for") || lowerText.includes("find") || lowerText.includes("search")) {
-      return "researching";
+      return "general";
     } else if (lowerText.includes("price") || lowerText.includes("cost") || lowerText.includes("cheap")) {
       return "finding-prices";
     } else if (lowerText.includes("compare") || lowerText.includes("better") || lowerText.includes("which")) {
@@ -78,12 +80,17 @@ export function useDemoChat(): UseDemoChatReturn {
 
     // Go straight to the next assistant response (skip user message)
     if (assistantMessageIndex < demoScript.length) {
-      // No thinking animation for this step
-      setMessages((prev) => [
-        ...prev,
-        { ...demoScript[assistantMessageIndex], timestamp: new Date() },
-      ]);
-      setCurrentStep((prev) => prev + 1);
+      setIsTyping(true);
+      setThinkingStage("researching"); // This will show "Researching products..."
+
+      setTimeout(() => {
+        setMessages((prev) => [
+          ...prev,
+          { ...demoScript[assistantMessageIndex], timestamp: new Date() },
+        ]);
+        setIsTyping(false);
+        setCurrentStep((prev) => prev + 1);
+      }, 1500);
     } else {
       setCurrentStep((prev) => prev + 1);
     }
@@ -91,7 +98,7 @@ export function useDemoChat(): UseDemoChatReturn {
 
   // Confirm price input and advance the conversation (skip user message)
   const confirmPriceInput = useCallback(
-    () => {
+    (price: number) => {
       // Calculate which messages to show next
       const userMessageIndex = currentStep * 2;
       const assistantMessageIndex = userMessageIndex + 1;
@@ -102,12 +109,17 @@ export function useDemoChat(): UseDemoChatReturn {
 
       // Go straight to the next assistant response (skip user message)
       if (assistantMessageIndex < demoScript.length) {
-        // No thinking animation for this step
-        setMessages((prev) => [
-          ...prev,
-          { ...demoScript[assistantMessageIndex], timestamp: new Date() },
-        ]);
-        setCurrentStep((prev) => prev + 1);
+        setIsTyping(true);
+        setThinkingStage("general"); // Just dots
+
+        setTimeout(() => {
+          setMessages((prev) => [
+            ...prev,
+            { ...demoScript[assistantMessageIndex], timestamp: new Date() },
+          ]);
+          setIsTyping(false);
+          setCurrentStep((prev) => prev + 1);
+        }, 1000);
       } else {
         setCurrentStep((prev) => prev + 1);
       }
@@ -173,6 +185,23 @@ export function useDemoChat(): UseDemoChatReturn {
     setThinkingStage("general");
   }, []);
 
+  // Update the price input value in the current message (for demo purposes)
+  const setPriceInputValue = useCallback((price: number) => {
+    setMessages((prev) => {
+      const lastMsg = prev[prev.length - 1];
+      if (!lastMsg || lastMsg.role !== "assistant") return prev;
+
+      const updatedContent = lastMsg.content.map((c) => {
+        if (c.type === "priceInput") {
+          return { ...c, currentPrice: price };
+        }
+        return c;
+      });
+
+      return [...prev.slice(0, -1), { ...lastMsg, content: updatedContent }];
+    });
+  }, []);
+
   return {
     messages,
     sendMessage,
@@ -182,6 +211,7 @@ export function useDemoChat(): UseDemoChatReturn {
     isTyping,
     thinkingStage,
     reset,
+    setPriceInputValue,
   };
 }
 

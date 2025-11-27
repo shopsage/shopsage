@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Plus_Jakarta_Sans, Playfair_Display } from "next/font/google";
 import "./globals.css";
+import { PhoneMockupWrapper } from "@/components/layout";
 
 const plusJakartaSans = Plus_Jakarta_Sans({
   variable: "--font-sans",
@@ -30,7 +31,7 @@ export default function RootLayout({
       <body
         className={`${plusJakartaSans.variable} ${playfairDisplay.variable} antialiased`}
       >
-        {children}
+        <PhoneMockupWrapper>{children}</PhoneMockupWrapper>
       </body>
     </html>
   );

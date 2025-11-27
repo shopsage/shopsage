@@ -50,7 +50,7 @@ export function AddProductModal({ onAdd }: AddProductModalProps) {
             hover:bg-primary-600
           "
         >
-          <Plus className="h-6 w-6" />
+          <Plus className="h-6 w-6" strokeWidth={1.5} />
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-[calc(var(--app-max-width)-32px)] rounded-[var(--radius-lg)]">

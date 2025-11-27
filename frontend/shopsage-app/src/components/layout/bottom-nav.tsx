@@ -30,12 +30,12 @@ export function BottomNav() {
         right-0
         z-50
         flex
-        h-[70px]
+        h-[85px]
         items-center
         justify-around
         border-t
         border-neutral-200/30
-        pb-[10px]
+        pb-[25px]
       "
     >
       {navItems.map((item) => {
@@ -55,7 +55,7 @@ export function BottomNav() {
           >
             <Icon
               className="h-6 w-6"
-              strokeWidth={isActive ? 2.5 : 2}
+              strokeWidth={isActive ? 2.5 : 1.5}
             />
             <span
               className={cn(

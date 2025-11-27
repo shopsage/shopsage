@@ -24,7 +24,7 @@ export default function TrackingPage() {
 
   return (
     <>
-      <main className="hide-scrollbar flex-1 overflow-y-auto px-4 pb-[90px] pt-[80px]">
+      <main className="hide-scrollbar flex-1 overflow-y-auto px-4 pb-[124px] pt-[120px]">
         <div className="mx-auto w-full max-w-md">
 
           <button

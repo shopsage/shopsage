@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 
 interface FilterOption {
@@ -93,9 +94,12 @@ export function FilterChips({
 
       {/* Options */}
       <div className="flex gap-1 flex-wrap">
-        {options.map((option) => (
-          <button
+        {options.map((option, index) => (
+          <motion.button
             key={option.value}
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: index * 0.05, duration: 0.2 }}
             onClick={() => onChange?.(option.value)}
             className={cn(
               "whitespace-nowrap rounded-xl px-3 py-1.5 text-xs font-medium transition-all duration-200",
@@ -110,7 +114,7 @@ export function FilterChips({
             }
           >
             {option.label}
-          </button>
+          </motion.button>
         ))}
       </div>
     </div>

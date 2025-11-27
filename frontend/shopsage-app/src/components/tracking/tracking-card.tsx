@@ -161,7 +161,7 @@ export function TrackingCard({
               <span
                 className={cn(
                   "text-base font-bold",
-                  isAtTarget ? "text-success" : "text-neutral-800"
+                  isAtTarget ? "text-success" : "text-primary"
                 )}
               >
                 ${item.currentPrice}
@@ -202,7 +202,6 @@ export function TrackingCard({
                   hover:bg-neutral-200
                 "
               >
-                <ExternalLink className="h-3.5 w-3.5" />
                 View
               </button>
               <button
@@ -223,7 +222,7 @@ export function TrackingCard({
                 "
                 aria-label="More options"
               >
-                <MoreHorizontal className="h-5 w-5" />
+                <MoreHorizontal className="h-5 w-5" strokeWidth={1.5} />
               </button>
             </div>
           )}
