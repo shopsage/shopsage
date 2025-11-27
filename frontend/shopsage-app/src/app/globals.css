@@ -1,0 +1,336 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+/* ============================================
+   ShopSage Design System
+   Based on STYLE_GUIDE.md
+   ============================================ */
+
+:root {
+  /* --------------------------------------
+     Primary Brand Scale (Burnt Orange)
+     -------------------------------------- */
+  --ss-primary-50: #FDF6F3;
+  --ss-primary-100: #FCECE6;
+  --ss-primary-200: #F8D5C8;
+  --ss-primary-300: #F2B69E;
+  --ss-primary-400: #EE9270;
+  --ss-primary-500: #EB5E28;
+  --ss-primary-600: #C94516;
+  --ss-primary-700: #9E3611;
+  --ss-primary-800: #75280D;
+  --ss-primary-900: #4D1A08;
+
+  /* Semantic aliases */
+  --ss-primary: var(--ss-primary-500);
+  --ss-primary-dark: var(--ss-primary-600);
+  --ss-primary-soft: var(--ss-primary-100);
+
+  /* --------------------------------------
+     Neutral Scale (Warm Stone)
+     -------------------------------------- */
+  --ss-neutral-50: #FAF9F7;
+  --ss-neutral-100: #F7F5F2;
+  --ss-neutral-200: #E6E2DE;
+  --ss-neutral-300: #D1CCC6;
+  --ss-neutral-400: #B0ABA5;
+  --ss-neutral-500: #8C8680;
+  --ss-neutral-600: #6B6661;
+  --ss-neutral-700: #4D4945;
+  --ss-neutral-800: #2D2A26;
+  --ss-neutral-900: #1A1816;
+
+  /* --------------------------------------
+     Surface Colors
+     -------------------------------------- */
+  --ss-surface-bg: var(--ss-neutral-100);
+  --ss-surface-card: #FFFFFF;
+  --ss-surface-float: #FFFFFF;
+  --ss-outer-bg: var(--ss-neutral-200);
+
+  /* --------------------------------------
+     Text Colors
+     -------------------------------------- */
+  --ss-text-main: var(--ss-neutral-800);
+  --ss-text-muted: var(--ss-neutral-500);
+  --ss-text-on-primary: #FFFFFF;
+
+  /* --------------------------------------
+     Semantic / Functional Colors
+     -------------------------------------- */
+  --ss-accent-green: #4A7C59;
+  --ss-accent-green-bg: #E8F5E9;
+  --ss-accent-gold: #D4A03D;
+  --ss-accent-gold-bg: #FFF8E1;
+  --ss-error: #D93025;
+  --ss-error-bg: #FCE8E6;
+  --ss-info: #4A6FA5;
+  --ss-info-bg: #EBF3FB;
+
+  /* --------------------------------------
+     User Bubble Color
+     -------------------------------------- */
+  --ss-user-bubble: #33302C;
+
+  /* --------------------------------------
+     Typography
+     -------------------------------------- */
+  --font-sans: 'Plus Jakarta Sans', system-ui, sans-serif;
+  --font-serif: 'Playfair Display', Georgia, serif;
+
+  /* --------------------------------------
+     Spacing & Layout
+     -------------------------------------- */
+  --app-max-width: 414px;
+  --app-height: 100vh;
+
+  /* --------------------------------------
+     Border Radius
+     -------------------------------------- */
+  --radius-sm: 8px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+  --radius-pill: 32px;
+  --radius-full: 9999px;
+
+  /* --------------------------------------
+     Shadows (4-level system)
+     -------------------------------------- */
+  --shadow-1: 0 2px 4px rgba(0, 0, 0, 0.02);
+  --shadow-2: 0 4px 12px rgba(0, 0, 0, 0.15);
+  --shadow-3: 0 12px 32px rgba(0, 0, 0, 0.08);
+  --shadow-4: 0 40px 80px rgba(0, 0, 0, 0.15);
+  --shadow-card: 0 8px 24px rgba(0, 0, 0, 0.06);
+  --shadow-primary: 0 4px 12px rgba(235, 94, 40, 0.3);
+  --shadow-primary-soft: 0 4px 12px rgba(235, 94, 40, 0.08);
+
+  /* --------------------------------------
+     Animations
+     -------------------------------------- */
+  --ease-smooth: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --duration-fast: 0.2s;
+  --duration-normal: 0.3s;
+  --duration-slow: 0.6s;
+
+  /* --------------------------------------
+     shadcn/ui Variables (ShopSage themed)
+     -------------------------------------- */
+  --radius: 0.5rem;
+  --background: var(--ss-surface-bg);
+  --foreground: var(--ss-text-main);
+  --card: var(--ss-surface-card);
+  --card-foreground: var(--ss-text-main);
+  --popover: var(--ss-surface-float);
+  --popover-foreground: var(--ss-text-main);
+  --primary: var(--ss-primary);
+  --primary-foreground: var(--ss-text-on-primary);
+  --secondary: var(--ss-neutral-200);
+  --secondary-foreground: var(--ss-text-main);
+  --muted: var(--ss-neutral-200);
+  --muted-foreground: var(--ss-text-muted);
+  --accent: var(--ss-primary-soft);
+  --accent-foreground: var(--ss-primary-700);
+  --destructive: var(--ss-error);
+  --border: var(--ss-neutral-300);
+  --input: var(--ss-neutral-300);
+  --ring: var(--ss-primary-400);
+}
+
+/* ============================================
+   Tailwind Theme Extension (v4 @theme)
+   ============================================ */
+@theme inline {
+  /* ShopSage Primary Colors */
+  --color-primary-50: var(--ss-primary-50);
+  --color-primary-100: var(--ss-primary-100);
+  --color-primary-200: var(--ss-primary-200);
+  --color-primary-300: var(--ss-primary-300);
+  --color-primary-400: var(--ss-primary-400);
+  --color-primary-500: var(--ss-primary-500);
+  --color-primary-600: var(--ss-primary-600);
+  --color-primary-700: var(--ss-primary-700);
+  --color-primary-800: var(--ss-primary-800);
+  --color-primary-900: var(--ss-primary-900);
+
+  /* ShopSage Neutral Colors */
+  --color-neutral-50: var(--ss-neutral-50);
+  --color-neutral-100: var(--ss-neutral-100);
+  --color-neutral-200: var(--ss-neutral-200);
+  --color-neutral-300: var(--ss-neutral-300);
+  --color-neutral-400: var(--ss-neutral-400);
+  --color-neutral-500: var(--ss-neutral-500);
+  --color-neutral-600: var(--ss-neutral-600);
+  --color-neutral-700: var(--ss-neutral-700);
+  --color-neutral-800: var(--ss-neutral-800);
+  --color-neutral-900: var(--ss-neutral-900);
+
+  /* Surface Colors */
+  --color-surface-bg: var(--ss-surface-bg);
+  --color-surface-card: var(--ss-surface-card);
+  --color-surface-float: var(--ss-surface-float);
+  --color-outer-bg: var(--ss-outer-bg);
+
+  /* Semantic Colors */
+  --color-success: var(--ss-accent-green);
+  --color-success-bg: var(--ss-accent-green-bg);
+  --color-warning: var(--ss-accent-gold);
+  --color-warning-bg: var(--ss-accent-gold-bg);
+  --color-error: var(--ss-error);
+  --color-error-bg: var(--ss-error-bg);
+  --color-info: var(--ss-info);
+  --color-info-bg: var(--ss-info-bg);
+
+  /* User Bubble */
+  --color-user-bubble: var(--ss-user-bubble);
+
+  /* Fonts */
+  --font-sans: var(--font-sans);
+  --font-serif: var(--font-serif);
+
+  /* Border Radius */
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+  --radius-pill: var(--radius-pill);
+
+  /* Shadows */
+  --shadow-subtle: var(--shadow-1);
+  --shadow-card: var(--shadow-card);
+  --shadow-float: var(--shadow-3);
+  --shadow-frame: var(--shadow-4);
+  --shadow-primary: var(--shadow-primary);
+
+  /* shadcn/ui colors mapped to theme */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+/* ============================================
+   Base Styles
+   ============================================ */
+html {
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--ss-outer-bg);
+  color: var(--ss-text-main);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ============================================
+   Animations
+   ============================================ */
+@keyframes slideUpFade {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes pulse-soft {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+/* Animation utility classes */
+.animate-slide-up {
+  animation: slideUpFade 0.6s var(--ease-smooth) forwards;
+  opacity: 0;
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out forwards;
+}
+
+/* Stagger delays for chat messages */
+.stagger-1 { animation-delay: 0.1s; }
+.stagger-2 { animation-delay: 0.2s; }
+.stagger-3 { animation-delay: 0.3s; }
+.stagger-4 { animation-delay: 0.4s; }
+.stagger-5 { animation-delay: 0.5s; }
+.stagger-6 { animation-delay: 0.6s; }
+.stagger-7 { animation-delay: 0.7s; }
+
+/* ============================================
+   Scrollbar Styles
+   ============================================ */
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* ============================================
+   Glassmorphism Utilities
+   ============================================ */
+.glass {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+.glass-light {
+  background: rgba(247, 245, 242, 0.9);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+/* ============================================
+   Focus States
+   ============================================ */
+.focus-ring:focus-visible {
+  outline: 2px solid var(--ss-primary-400);
+  outline-offset: 2px;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
