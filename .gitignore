@@ -44,6 +44,7 @@ research_result_*.json
 
 # LangGraph
 .langgraph/
+.langgraph_api/
 langgraph_storage/
 
 # Logs
