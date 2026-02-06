@@ -1,9 +1,11 @@
 {
   "dependencies": [
     "./google_shopping_scraper",
-    "./supplier_research_agent"
+    "./product_research_scraper",
+    "./orchestrator"
   ],
   "graphs": {
+    "orchestrator": "./orchestrator/agent.py:graph",
     "supplier_research_agent": "./google_shopping_scraper/agent.py:graph",
     "product_research_agent": "./product_research_scraper/agent.py:graph"
   },

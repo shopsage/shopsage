@@ -5,26 +5,14 @@ import { AnimatePresence, motion } from "framer-motion";
 import { ChatContainer } from "@/components/chat/chat-container";
 import { Composer } from "@/components/chat/composer";
 import { SuggestionCards } from "@/components/chat/suggestion-cards";
-import { useDemoChat } from "@/hooks/use-demo-chat";
-import { useAutoDemo } from "@/hooks/use-auto-demo";
+import { useChat } from "@/hooks/use-chat";
 import { useTracking } from "@/hooks/use-tracking";
 import type { TrackedItem } from "@/lib/mock-data";
 
 export default function SearchPage() {
-  const { messages, sendMessage, confirmSelection, confirmPriceInput, updatePreferences, isTyping, thinkingStage, setPriceInputValue } = useDemoChat();
+  const { messages, sendMessage, confirmSelection, confirmPriceInput, updatePreferences, isTyping, thinkingStage } = useChat();
   const { addItem } = useTracking();
   const [input, setInput] = useState("");
-
-  useAutoDemo({
-    sendMessage,
-    updatePreferences,
-    confirmSelection,
-    confirmPriceInput,
-    setPriceInputValue,
-    setInput,
-    isTyping,
-    messages,
-  });
 
   const handleSend = () => {
     if (input.trim()) {

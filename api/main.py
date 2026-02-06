@@ -1,7 +1,9 @@
-"""FastAPI application for hosting the supplier research agent"""
+"""FastAPI application for hosting the ShopSage orchestrator and research agents"""
 
 import os
-from typing import Optional
+import re
+import uuid
+from typing import Optional, List
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
@@ -9,27 +11,39 @@ from dotenv import load_dotenv
 
 from google_shopping_scraper.agent import run_research_agent
 from google_shopping_scraper.tools.llm_provider import LLMClient
+from orchestrator.agent import run_orchestrator
 
 load_dotenv()
 
 # Initialize FastAPI app
 app = FastAPI(
-    title="ShopSage - Supplier Research Agent",
-    description="AI-powered agent for researching and evaluating product suppliers",
-    version="0.1.0",
+    title="ShopSage - AI Shopping Assistant",
+    description="AI-powered agent for product research and supplier comparison",
+    version="0.2.0",
 )
 
 # Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Configure appropriately for production
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 
-# Request/Response models
+# ── Request/Response models ──────────────────────────────────────────────────
+
+class ChatMessage(BaseModel):
+    role: str
+    content: str
+
+
+class ChatRequest(BaseModel):
+    messages: List[ChatMessage] = Field(default_factory=list, description="Conversation history")
+    latest_message: str = Field(..., description="The most recent user message")
+
+
 class ResearchRequest(BaseModel):
     """Request model for product research"""
 
@@ -60,15 +74,193 @@ class ProvidersResponse(BaseModel):
     available_providers: list[str]
 
 
-# Endpoints
+# ── Transformer helpers ──────────────────────────────────────────────────────
+
+def _slugify(text: str) -> str:
+    """Convert text to a URL-friendly slug for use as an id."""
+    slug = text.lower().strip()
+    slug = re.sub(r"[^\w\s-]", "", slug)
+    slug = re.sub(r"[\s_]+", "-", slug)
+    return slug[:60]
+
+
+def _format_review_count(count) -> str:
+    """Format a numeric review count to a display string like '1.2k'."""
+    if count is None:
+        return "0"
+    try:
+        count = int(count)
+    except (ValueError, TypeError):
+        return str(count)
+    if count >= 1000:
+        return f"{count / 1000:.1f}k"
+    return str(count)
+
+
+def transform_supplier_result(agent_result: dict) -> list:
+    """
+    Transform supplier agent output into frontend MessageContent[] blocks.
+
+    Maps recommendations to Product objects the frontend carousel can render,
+    and builds text summary blocks from metadata.
+    """
+    content_blocks = []
+    recommendations = agent_result.get("recommendations", [])
+    metadata = agent_result.get("metadata", {})
+    price_insights = metadata.get("price_insights", {})
+    query_analysis = metadata.get("query_analysis", {})
+
+    # Intro text
+    product_name = query_analysis.get("brand", "")
+    model_name = query_analysis.get("model", "")
+    full_name = f"{product_name} {model_name}".strip() or "your product"
+    count = len(recommendations)
+
+    if count > 0:
+        intro = f"I found <strong>{count} supplier listings</strong> for the <strong>{full_name}</strong>. Here are the best options:"
+    else:
+        intro = f"I couldn't find any good listings for <strong>{full_name}</strong>. Try a different product name."
+        content_blocks.append({"type": "text", "text": intro})
+        return content_blocks
+
+    content_blocks.append({"type": "text", "text": intro})
+
+    # Map recommendations → frontend Product objects
+    products = []
+    for i, rec in enumerate(recommendations):
+        price = rec.get("extracted_price") or rec.get("price")
+        product = {
+            "id": _slugify(rec.get("title", f"product-{i}")),
+            "title": rec.get("title", "Unknown Product"),
+            "price": round(float(price), 2) if price else 0,
+            "rating": round(float(rec.get("rating", 0)), 1),
+            "reviewCount": _format_review_count(rec.get("reviews", 0)),
+            "platform": rec.get("seller") or rec.get("source", "Unknown"),
+        }
+        # Badge for the top-scored item
+        if i == 0:
+            product["badge"] = "Best Deal"
+        products.append(product)
+
+    if products:
+        content_blocks.append({"type": "products", "products": products})
+
+    # Analysis text with price insights
+    analysis_parts = []
+    if price_insights:
+        low = price_insights.get("lowest_price")
+        high = price_insights.get("highest_price")
+        median = price_insights.get("median_price")
+        if low and high:
+            analysis_parts.append(f"Prices range from <strong>${low:.2f}</strong> to <strong>${high:.2f}</strong>")
+        if median:
+            analysis_parts.append(f"with a median of <strong>${median:.2f}</strong>")
+
+    # Top recommendation reasoning
+    reasoning_list = metadata.get("recommendations_reasoning", [])
+    if reasoning_list:
+        top = reasoning_list[0]
+        why = top.get("why_recommended", "")
+        if why:
+            analysis_parts.append(f"<br><br>Top pick: {why}.")
+
+    if analysis_parts:
+        content_blocks.append({"type": "text", "text": " ".join(analysis_parts)})
+
+    return content_blocks
+
+
+def transform_product_result(agent_result: dict) -> list:
+    """
+    Transform product research agent output into frontend MessageContent[] blocks.
+
+    Extracts the evaluation text and formats it for display.
+    """
+    content_blocks = []
+    evaluation = agent_result.get("evaluation")
+
+    if evaluation:
+        if isinstance(evaluation, dict):
+            eval_text = evaluation.get("evaluation", "")
+        else:
+            eval_text = str(evaluation)
+
+        if eval_text:
+            # Convert newlines to <br> for HTML rendering
+            formatted = eval_text.replace("\n\n", "<br><br>").replace("\n", "<br>")
+            content_blocks.append({"type": "text", "text": formatted})
+    else:
+        content_blocks.append({
+            "type": "text",
+            "text": "I wasn't able to find enough information to give you a good recommendation. Could you try rephrasing your question?"
+        })
+
+    return content_blocks
+
+
+# ── Chat endpoint (main integration point) ───────────────────────────────────
+
+@app.post("/api/chat")
+async def chat(request: ChatRequest):
+    """
+    Main chat endpoint for the frontend.
+
+    Accepts conversation history + latest message, routes through the
+    orchestrator, and returns a formatted assistant message.
+    """
+    try:
+        # Convert Pydantic models to plain dicts for the orchestrator
+        messages = [{"role": m.role, "content": m.content} for m in request.messages]
+
+        # Run the orchestrator
+        state = run_orchestrator(
+            messages=messages,
+            latest_message=request.latest_message,
+        )
+
+        route = state.get("route", "product")
+        agent_result = state.get("result")
+        errors = state.get("errors", [])
+
+        # Transform agent result into frontend content blocks
+        if agent_result:
+            if route == "supplier":
+                content = transform_supplier_result(agent_result)
+            else:
+                content = transform_product_result(agent_result)
+        else:
+            content = [{"type": "text", "text": "Something went wrong processing your request. Please try again."}]
+            if errors:
+                content.append({"type": "text", "text": f"Error: {errors[-1]}"})
+
+        response = {
+            "id": f"assistant-{uuid.uuid4().hex[:8]}",
+            "role": "assistant",
+            "content": content,
+            "route": route,
+            "extracted_query": state.get("extracted_query", ""),
+        }
+
+        return response
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail={"message": "Chat processing failed", "error": str(e)},
+        )
+
+
+# ── Existing endpoints ───────────────────────────────────────────────────────
+
 @app.get("/", response_model=dict)
 async def root():
     """Root endpoint"""
     return {
-        "message": "ShopSage Supplier Research Agent API",
-        "version": "0.1.0",
+        "message": "ShopSage AI Shopping Assistant API",
+        "version": "0.2.0",
         "endpoints": {
-            "POST /research": "Submit a product research query",
+            "POST /api/chat": "Chat with the orchestrator (main endpoint)",
+            "POST /research": "Direct supplier research query",
             "GET /health": "Health check",
             "GET /providers": "List available LLM providers",
         },
@@ -80,7 +272,7 @@ async def health_check():
     """Health check endpoint"""
     return HealthResponse(
         status="healthy",
-        version="0.1.0",
+        version="0.2.0",
         configured_provider=os.getenv("LLM_PROVIDER", "gemini"),
     )
 
@@ -97,35 +289,22 @@ async def list_providers():
 @app.post("/research")
 async def research_product(request: ResearchRequest):
     """
-    Research product suppliers
-
-    Processes the query through the LangGraph agent pipeline:
-    1. Query processing (extract brand, model, etc.)
-    2. Search (fetch from SerpAPI)
-    3. Filter (remove irrelevant listings)
-    4. Evaluate (score and rank)
-    5. Format (prepare response)
-
-    Returns comprehensive results with recommendations and metadata.
+    Research product suppliers (direct, bypasses orchestrator)
     """
     try:
-        # Override LLM provider if specified
         if request.provider:
             original_provider = os.getenv("LLM_PROVIDER")
             os.environ["LLM_PROVIDER"] = request.provider
 
-        # Run the agent
         result = run_research_agent(
             query=request.query,
             max_results=request.max_results,
             top_n=request.top_n,
         )
 
-        # Restore original provider
         if request.provider and original_provider:
             os.environ["LLM_PROVIDER"] = original_provider
 
-        # Check for errors
         errors = result.get("errors", [])
         if errors and not result.get("recommendations"):
             raise HTTPException(
@@ -133,7 +312,6 @@ async def research_product(request: ResearchRequest):
                 detail={"message": "Agent execution failed", "errors": errors},
             )
 
-        # Format response
         response = {
             "query": request.query,
             "recommendations": result.get("recommendations", []),
@@ -159,20 +337,14 @@ async def research_product(request: ResearchRequest):
 async def research_product_summary(request: ResearchRequest):
     """
     Research product suppliers (summary only)
-
-    Same as /research but returns only recommendations and key metadata,
-    excluding rejected products and detailed filter data.
-    Useful for UI that doesn't need complete data.
     """
     try:
-        # Run full research
         result = run_research_agent(
             query=request.query,
             max_results=request.max_results,
             top_n=request.top_n,
         )
 
-        # Return summary only
         metadata = result.get("metadata", {})
         response = {
             "query": request.query,
