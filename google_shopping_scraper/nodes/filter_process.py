@@ -207,7 +207,7 @@ def filter_and_process(state: AgentState) -> Dict[str, Any]:
             "filter_settings": {
                 "brand_threshold": brand_threshold,
                 "model_threshold": brand_threshold,
-                "price_outlier_percent": price_outlier_threshold,
+                "price_outlier_mad_threshold": mad_threshold,
             },
         }
 
