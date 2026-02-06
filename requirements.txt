@@ -9,7 +9,7 @@ langgraph-checkpoint-sqlite>=1.0.0
 # API Clients
 google-search-results>=2.4.2
 google-api-python-client==2.187.0
-asyncpraw==7.8.1
+asyncpraw==7.2
 
 # Data validation and processing
 pydantic>=2.0.0
