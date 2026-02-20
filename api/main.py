@@ -174,22 +174,63 @@ def transform_product_result(agent_result: dict) -> list:
     """
     Transform product research agent output into frontend MessageContent[] blocks.
 
-    Extracts the evaluation text and formats it for display.
+    Produces: top pick text, honourable mentions, key findings, and source links.
     """
     content_blocks = []
     evaluation = agent_result.get("evaluation")
 
-    if evaluation:
-        if isinstance(evaluation, dict):
-            eval_text = evaluation.get("evaluation", "")
-        else:
-            eval_text = str(evaluation)
+    if not evaluation or not isinstance(evaluation, dict):
+        content_blocks.append({
+            "type": "text",
+            "text": "I wasn't able to find enough information to give you a good recommendation. Could you try rephrasing your question?"
+        })
+        return content_blocks
 
-        if eval_text:
-            # Convert newlines to <br> for HTML rendering
-            formatted = eval_text.replace("\n\n", "<br><br>").replace("\n", "<br>")
-            content_blocks.append({"type": "text", "text": formatted})
-    else:
+    # Block 1: Top Pick
+    top_pick = evaluation.get("top_pick")
+    if top_pick and isinstance(top_pick, dict):
+        name = top_pick.get("name", "")
+        reason = top_pick.get("reason", "")
+        intro = f"Based on my research, the top pick is the <strong>{name}</strong>."
+        if reason:
+            intro += f" {reason}"
+        content_blocks.append({"type": "text", "text": intro})
+
+    # Block 2: Honourable Mentions
+    mentions = evaluation.get("honourable_mentions", [])
+    if mentions:
+        mentions_html = "<strong>Honourable Mentions:</strong><br>"
+        for m in mentions:
+            if isinstance(m, dict):
+                mname = m.get("name", "")
+                mreason = m.get("reason", "")
+                mentions_html += f"&bull; <strong>{mname}</strong> &mdash; {mreason}<br>"
+        content_blocks.append({"type": "text", "text": mentions_html})
+
+    # Block 3: Key Findings
+    findings = evaluation.get("key_findings", [])
+    if findings:
+        findings_html = "<strong>Key Research Findings:</strong><br>"
+        for f in findings:
+            findings_html += f"&bull; {f}<br>"
+        content_blocks.append({"type": "text", "text": findings_html})
+
+    # Block 4: Sources
+    reddit_sources = agent_result.get("reddit_sources", set())
+    google_sources = agent_result.get("google_sources", set())
+
+    source_groups = []
+    if reddit_sources:
+        reddit_list = [{"title": str(t), "url": str(u)} for t, u in reddit_sources]
+        source_groups.append({"label": "Reddit", "sources": reddit_list})
+    if google_sources:
+        google_list = [{"title": str(t), "url": str(u)} for t, u in google_sources]
+        source_groups.append({"label": "Google", "sources": google_list})
+    if source_groups:
+        content_blocks.append({"type": "sources", "sourceGroups": source_groups})
+
+    # Fallback if no content was generated
+    if not content_blocks:
         content_blocks.append({
             "type": "text",
             "text": "I wasn't able to find enough information to give you a good recommendation. Could you try rephrasing your question?"

@@ -63,13 +63,24 @@ export const mockTrackedItems: TrackedItem[] = [
   },
 ];
 
+export interface SourceItem {
+  title: string;
+  url: string;
+}
+
+export interface SourceGroup {
+  label: string;
+  sources: SourceItem[];
+}
+
 // Demo conversation script
 export type MessageContent =
   | { type: "text"; text: string }
   | { type: "preferences"; options: PreferenceGroup[] }
   | { type: "products"; products: Product[]; followUpText?: string }
   | { type: "priceInput"; productId: string; currentPrice: number }
-  | { type: "trackingConfirmation"; product: TrackedItem };
+  | { type: "trackingConfirmation"; product: TrackedItem }
+  | { type: "sources"; sourceGroups: SourceGroup[] };
 
 export interface PreferenceGroup {
   label: string;

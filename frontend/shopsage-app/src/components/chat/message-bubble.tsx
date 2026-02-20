@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ProductCarousel } from "@/components/product/product-carousel";
+import { SourceList } from "@/components/chat/source-list";
 import { FilterChips } from "@/components/product/filter-chips";
 import { PriceInput } from "@/components/product/price-input";
 import { TrackingCard } from "@/components/tracking/tracking-card";
@@ -246,6 +247,13 @@ function MessageContentRenderer({
           product={content.product}
           onTrackProduct={onTrackProduct}
         />
+      );
+
+    case "sources":
+      return (
+        <div className="w-full">
+          <SourceList sourceGroups={content.sourceGroups} />
+        </div>
       );
 
     default:

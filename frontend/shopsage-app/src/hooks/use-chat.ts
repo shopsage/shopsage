@@ -34,6 +34,7 @@ function summariseContent(content: MessageContent[]): string {
       if (block.type === "text") return block.text.replace(/<[^>]*>/g, "");
       if (block.type === "products")
         return `[${block.products.length} product results shown]`;
+      if (block.type === "sources") return "[research sources shown]";
       return "";
     })
     .filter(Boolean)

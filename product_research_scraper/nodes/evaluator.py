@@ -11,15 +11,25 @@ def evaluate_user_query(state: AgentState) -> Dict[str, Any]:
     reddit_dump = state["reddit_dump"]
     google_dump = state["google_dump"]
 
-    system_prompt = """You are an expert evaluator, able to answer the user's question based on the provided context.
-Your task is to analyze the user query and answer it based on the provided context, explaining your decision making process and reasoning.
+    system_prompt = """You are an expert product research evaluator. Analyze the user's question and the provided research context to give a clear, structured recommendation.
 
-Your answer should be a JSON object with this following information:
-- evaluation: Your evaluation of the users query based on the context that is provided to you as well as your reasoning.
-- confidence: Your confidence in the extraction (0-1)
+Your answer MUST be a JSON object with these exact keys:
 
-Return your response as a JSON object with these exact keys.
-    """
+- top_pick: An object with:
+  - name: The product name (string)
+  - reason: A concise 1-2 sentence explanation of why this is the top pick (string)
+
+- honourable_mentions: An array of 2-3 objects, each with:
+  - name: The product name (string)
+  - reason: A concise 1 sentence explanation (string)
+
+- key_findings: An array of 3-5 short bullet point strings summarizing the most important research findings from the context (e.g. "Reddit users overwhelmingly recommend X for Y use case", "Multiple sources cite Z as a common issue with A")
+
+- confidence: Your confidence in the recommendation (0-1 float)
+
+If you cannot identify a clear top pick or there is not enough context, set top_pick to null and provide your best findings in key_findings.
+
+Return ONLY valid JSON. No markdown, no explanation outside the JSON."""
 
     user_prompt = f"User Question: {user_query}\nReddit context: {reddit_dump}\nGoogle context{google_dump}"
 
@@ -38,7 +48,9 @@ Return your response as a JSON object with these exact keys.
             processed_evaluation = json.loads(response_clean)
 
             required_fields = [
-                "evaluation",
+                "top_pick",
+                "honourable_mentions",
+                "key_findings",
                 "confidence"
             ]
             for field in required_fields:
@@ -48,7 +60,9 @@ Return your response as a JSON object with these exact keys.
 
         except json.JSONDecodeError as e:
             processed_evaluation = {
-                "evaluation": "I am unable to give you appropriate data based off your request, please try again with a new query.",
+                "top_pick": None,
+                "honourable_mentions": [],
+                "key_findings": ["Unable to provide recommendation based on available data."],
                 "confidence": 0.0
             }
             error = f"Failed to parse LLM response as JSON: {str(e)}"
@@ -70,7 +84,12 @@ Return your response as a JSON object with these exact keys.
 
         error_msg = f"Evaluation failed: {str(e)}"
 
-        fallback_evaluation = {"evaluation": "I am unable to give you appropriate data based off your request, please try again with a new query", "confidence": 0.0}
+        fallback_evaluation = {
+            "top_pick": None,
+            "honourable_mentions": [],
+            "key_findings": ["Unable to provide recommendation based on available data."],
+            "confidence": 0.0
+        }
 
         return {
             "evaluation": fallback_evaluation,

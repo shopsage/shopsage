@@ -4,7 +4,8 @@
       "Bash(mkdir:*)",
       "Bash(find:*)",
       "Bash(python:*)",
-      "Bash(powershell.exe -Command:*)"
+      "Bash(powershell.exe -Command:*)",
+      "mcp__ide__getDiagnostics"
     ],
     "deny": [],
     "ask": []
