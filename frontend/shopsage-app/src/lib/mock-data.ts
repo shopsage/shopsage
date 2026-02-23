@@ -66,6 +66,9 @@ export const mockTrackedItems: TrackedItem[] = [
 export interface SourceItem {
   title: string;
   url: string;
+  snippet?: string;
+  author?: string;     // e.g. "u/username" for Reddit comments
+  timestamp?: string;  // ISO date "YYYY-MM-DD" — rendered as relative time on the card
 }
 
 export interface SourceGroup {
@@ -80,7 +83,8 @@ export type MessageContent =
   | { type: "products"; products: Product[]; followUpText?: string }
   | { type: "priceInput"; productId: string; currentPrice: number }
   | { type: "trackingConfirmation"; product: TrackedItem }
-  | { type: "sources"; sourceGroups: SourceGroup[] };
+  | { type: "sources"; sourceGroups: SourceGroup[] }
+  | { type: "sourcePreview"; sources: SourceItem[]; productName?: string };
 
 export interface PreferenceGroup {
   label: string;

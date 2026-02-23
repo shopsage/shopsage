@@ -18,14 +18,26 @@ Your answer MUST be a JSON object with these exact keys:
 - top_pick: An object with:
   - name: The product name (string)
   - reason: A concise 1-2 sentence explanation of why this is the top pick (string)
+  - evidence: An array of 1-2 objects, each a verbatim quote from the context supporting this pick:
+    - quote: Exact word-for-word text from the research context (string)
+    - author: The Reddit username exactly as it appears, e.g. "u/username" — or null if from a web source (string or null)
+    - timestamp: The date string exactly as it appears in the context, e.g. "2024-01-15" — or null (string or null)
 
 - honourable_mentions: An array of 2-3 objects, each with:
   - name: The product name (string)
   - reason: A concise 1 sentence explanation (string)
+  - evidence: An array of 1-2 objects with the same {quote, author, timestamp} shape as above
 
-- key_findings: An array of 3-5 short bullet point strings summarizing the most important research findings from the context (e.g. "Reddit users overwhelmingly recommend X for Y use case", "Multiple sources cite Z as a common issue with A")
+- key_findings: An array of 3-5 objects, each with:
+  - finding: A short bullet point string summarizing one important research finding (string)
+  - evidence: An array of 1-2 objects with the same {quote, author, timestamp} shape as above
 
 - confidence: Your confidence in the recommendation (0-1 float)
+
+Rules for evidence:
+- Quotes must be copied verbatim from the provided context — do not paraphrase
+- Author and timestamp must be taken exactly from the "[Author: u/xxx | Date: YYYY-MM-DD]" lines in the context
+- If a finding or mention has no supporting quote in the context, set evidence to []
 
 If you cannot identify a clear top pick or there is not enough context, set top_pick to null and provide your best findings in key_findings.
 
@@ -62,7 +74,7 @@ Return ONLY valid JSON. No markdown, no explanation outside the JSON."""
             processed_evaluation = {
                 "top_pick": None,
                 "honourable_mentions": [],
-                "key_findings": ["Unable to provide recommendation based on available data."],
+                "key_findings": [{"finding": "Unable to provide recommendation based on available data.", "evidence": []}],
                 "confidence": 0.0
             }
             error = f"Failed to parse LLM response as JSON: {str(e)}"
@@ -87,7 +99,7 @@ Return ONLY valid JSON. No markdown, no explanation outside the JSON."""
         fallback_evaluation = {
             "top_pick": None,
             "honourable_mentions": [],
-            "key_findings": ["Unable to provide recommendation based on available data."],
+            "key_findings": [{"finding": "Unable to provide recommendation based on available data.", "evidence": []}],
             "confidence": 0.0
         }
 

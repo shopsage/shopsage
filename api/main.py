@@ -170,6 +170,46 @@ def transform_supplier_result(agent_result: dict) -> list:
     return content_blocks
 
 
+def _build_evidence_preview_sources(
+    evidence_list: list,
+    reddit_urls: list,
+    google_urls: list,
+) -> list:
+    """
+    Convert LLM evidence items into SourceItem dicts for sourcePreview blocks.
+
+    Each evidence item is expected to have {quote, author, timestamp}.
+    URL assignment: Reddit evidence (author contains "u/") → first Reddit URL,
+    otherwise → first Google URL, falling back to first Reddit URL.
+    """
+    sources = []
+    for ev in evidence_list[:2]:
+        if not isinstance(ev, dict):
+            continue
+        quote = (ev.get("quote") or "").strip()
+        author = (ev.get("author") or "").strip()
+        timestamp = (ev.get("timestamp") or "").strip()
+        if not quote:
+            continue
+        is_reddit = "u/" in author
+        if is_reddit and reddit_urls:
+            url = reddit_urls[0]
+        elif not is_reddit and google_urls:
+            url = google_urls[0]
+        elif reddit_urls:
+            url = reddit_urls[0]
+        else:
+            url = ""
+        sources.append({
+            "title": "",
+            "url": url,
+            "snippet": quote,
+            "author": author or None,
+            "timestamp": timestamp or None,
+        })
+    return sources
+
+
 def transform_product_result(agent_result: dict) -> list:
     """
     Transform product research agent output into frontend MessageContent[] blocks.
@@ -178,6 +218,8 @@ def transform_product_result(agent_result: dict) -> list:
     """
     content_blocks = []
     evaluation = agent_result.get("evaluation")
+    print(evaluation)
+    print("I am here")
 
     if not evaluation or not isinstance(evaluation, dict):
         content_blocks.append({
@@ -188,46 +230,92 @@ def transform_product_result(agent_result: dict) -> list:
 
     # Block 1: Top Pick
     top_pick = evaluation.get("top_pick")
+    top_pick_name = ""
     if top_pick and isinstance(top_pick, dict):
-        name = top_pick.get("name", "")
+        top_pick_name = top_pick.get("name", "")
         reason = top_pick.get("reason", "")
-        intro = f"Based on my research, the top pick is the <strong>{name}</strong>."
+        intro = f"Based on my research, the top pick is the <strong>{top_pick_name}</strong>."
         if reason:
             intro += f" {reason}"
         content_blocks.append({"type": "text", "text": intro})
 
-    # Block 2: Honourable Mentions
-    mentions = evaluation.get("honourable_mentions", [])
-    if mentions:
-        mentions_html = "<strong>Honourable Mentions:</strong><br>"
-        for m in mentions:
-            if isinstance(m, dict):
-                mname = m.get("name", "")
-                mreason = m.get("reason", "")
-                mentions_html += f"&bull; <strong>{mname}</strong> &mdash; {mreason}<br>"
-        content_blocks.append({"type": "text", "text": mentions_html})
-
-    # Block 3: Key Findings
-    findings = evaluation.get("key_findings", [])
-    if findings:
-        findings_html = "<strong>Key Research Findings:</strong><br>"
-        for f in findings:
-            findings_html += f"&bull; {f}<br>"
-        content_blocks.append({"type": "text", "text": findings_html})
-
-    # Block 4: Sources
+    # Block 1b: Source preview cards (shown right after the top pick)
     reddit_sources = agent_result.get("reddit_sources", set())
     google_sources = agent_result.get("google_sources", set())
 
+    preview_sources = []
+    for src in list(reddit_sources)[:3]:
+        title = str(src[0]) if len(src) > 0 else ""
+        url = str(src[1]) if len(src) > 1 else ""
+        snippet = str(src[2]) if len(src) > 2 else ""
+        if title and url:
+            preview_sources.append({"title": title, "url": url, "snippet": snippet})
+    if len(preview_sources) < 3:
+        for src in list(google_sources)[:3 - len(preview_sources)]:
+            title = str(src[0]) if len(src) > 0 else ""
+            url = str(src[1]) if len(src) > 1 else ""
+            snippet = str(src[2]) if len(src) > 2 else ""
+            if title and url:
+                preview_sources.append({"title": title, "url": url, "snippet": snippet})
+    if preview_sources:
+        content_blocks.append({
+            "type": "sourcePreview",
+            "sources": preview_sources,
+            "productName": top_pick_name,
+        })
+
+    # Flat URL lists used by evidence helper below
+    reddit_url_list = [str(src[1]) for src in reddit_sources if len(src) > 1]
+    google_url_list = [str(src[1]) for src in google_sources if len(src) > 1]
+
+    # Block 2: Honourable Mentions — one text + optional evidence cards per mention
+    mentions = evaluation.get("honourable_mentions", [])
+    if mentions:
+        content_blocks.append({"type": "text", "text": "<strong>Honourable Mentions:</strong>"})
+        for m in mentions:
+            if not isinstance(m, dict):
+                continue
+            mname = m.get("name", "")
+            mreason = m.get("reason", "")
+            if not mname:
+                continue
+            content_blocks.append({"type": "text", "text": f"&bull; <strong>{mname}</strong> &mdash; {mreason}"})
+            ev_sources = _build_evidence_preview_sources(
+                m.get("evidence", []), reddit_url_list, google_url_list
+            )
+            if ev_sources:
+                content_blocks.append({"type": "sourcePreview", "sources": ev_sources, "productName": mname})
+
+    # Block 3: Key Findings — one text + optional evidence cards per finding
+    findings = evaluation.get("key_findings", [])
+    if findings:
+        content_blocks.append({"type": "text", "text": "<strong>Key Research Findings:</strong>"})
+        for f in findings:
+            if isinstance(f, dict):
+                finding_text = f.get("finding", "")
+                evidence = f.get("evidence", [])
+            else:
+                finding_text = str(f)
+                evidence = []
+            if not finding_text:
+                continue
+            content_blocks.append({"type": "text", "text": f"&bull; {finding_text}"})
+            ev_sources = _build_evidence_preview_sources(evidence, reddit_url_list, google_url_list)
+            if ev_sources:
+                content_blocks.append({"type": "sourcePreview", "sources": ev_sources, "productName": None})
+
+    # Block 4: Sources
     source_groups = []
     if reddit_sources:
-        reddit_list = [{"title": str(t), "url": str(u)} for t, u in reddit_sources]
+        reddit_list = [{"title": str(src[0]), "url": str(src[1]), "snippet": str(src[2]) if len(src) > 2 else ""} for src in reddit_sources]
         source_groups.append({"label": "Reddit", "sources": reddit_list})
     if google_sources:
-        google_list = [{"title": str(t), "url": str(u)} for t, u in google_sources]
+        google_list = [{"title": str(src[0]), "url": str(src[1]), "snippet": str(src[2]) if len(src) > 2 else ""} for src in google_sources]
         source_groups.append({"label": "Google", "sources": google_list})
     if source_groups:
         content_blocks.append({"type": "sources", "sourceGroups": source_groups})
+
+    print(content_blocks)
 
     # Fallback if no content was generated
     if not content_blocks:

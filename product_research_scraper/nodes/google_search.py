@@ -40,7 +40,8 @@ async def search_google(state: AgentState) -> Dict[str, Any]:
                     tasks.append(reddit_client.get_content_by_url(url=link, sources=google_sources))
                 else:
                     tasks.append(fetch_and_parse(http_client, link))
-                    google_sources.add((display_link, link))
+                    snippet = item.get("snippet", "")
+                    google_sources.add((display_link, link, snippet))
 
             results = await asyncio.gather(*tasks)
             

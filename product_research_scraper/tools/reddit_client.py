@@ -48,7 +48,9 @@ class RedditClient:
                 author_name = parent_comment.author.name.lower()
                 if author_name == 'automoderator' or author_name.endswith('bot'):
                     continue
-                
+
+                comment_date = datetime.fromtimestamp(parent_comment.created_utc, timezone.utc).strftime('%Y-%m-%d')
+                content.append(f"[Author: u/{parent_comment.author.name} | Date: {comment_date}]")
                 content.append(parent_comment.body)
                 parent_comment_count += 1
 
@@ -88,7 +90,8 @@ class RedditClient:
                 
                 async for submission in subreddit_client.search(query, limit=post_limit):
                     if sources is not None:
-                        sources.add((submission.title, f"https://www.reddit.com{submission.permalink}"))
+                        snippet = (submission.selftext or "").strip()[:350]
+                        sources.add((submission.title, f"https://www.reddit.com{submission.permalink}", snippet))
  
                     await self._extract_post_data(
                         submission=submission, 
@@ -135,7 +138,8 @@ class RedditClient:
                 await submission.load() 
 
                 if sources is not None:
-                    sources.add((submission.title, f"https://www.reddit.com{submission.permalink}"))
+                    snippet = (submission.selftext or "").strip()[:350]
+                    sources.add((submission.title, f"https://www.reddit.com{submission.permalink}", snippet))
 
                 await self._extract_post_data(
                     submission=submission, 

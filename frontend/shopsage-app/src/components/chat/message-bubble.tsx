@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ProductCarousel } from "@/components/product/product-carousel";
 import { SourceList } from "@/components/chat/source-list";
+import { SourcePreviewCards } from "@/components/chat/source-preview-cards";
 import { FilterChips } from "@/components/product/filter-chips";
 import { PriceInput } from "@/components/product/price-input";
 import { TrackingCard } from "@/components/tracking/tracking-card";
@@ -247,6 +248,13 @@ function MessageContentRenderer({
           product={content.product}
           onTrackProduct={onTrackProduct}
         />
+      );
+
+    case "sourcePreview":
+      return (
+        <div className="w-full">
+          <SourcePreviewCards sources={content.sources} productName={content.productName} />
+        </div>
       );
 
     case "sources":
