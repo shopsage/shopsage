@@ -276,7 +276,9 @@ function TypewriterText({ text, isUser, enableTypewriter, onComplete, onScrollTo
   const plainText = text
     .replace(/<br\s*\/?>/gi, "\n")
     .replace(/<\/p>/gi, "\n\n")
-    .replace(/<[^>]*>/g, "");
+    .replace(/<[^>]*>/g, "")
+    .replace(/&bull;/g, "•")
+    .replace(/&mdash;/g, "-");
 
   const { displayedText, isComplete } = useTypewriter({
     text: plainText,
