@@ -10,7 +10,8 @@
       "Bash(ls:*)",
       "Bash(xargs grep:*)",
       "Bash(npx next:*)",
-      "Bash(pip install:*)"
+      "Bash(pip install:*)",
+      "Bash(npm install:*)"
     ],
     "deny": [],
     "ask": []
