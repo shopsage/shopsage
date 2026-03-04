@@ -137,6 +137,7 @@ def transform_supplier_result(agent_result: dict) -> list:
             "reviewCount": _format_review_count(rec.get("reviews", 0)),
             "platform": rec.get("seller") or rec.get("source", "Unknown"),
             "image": rec.get("thumbnail"),
+            "url": rec.get("product_link") or rec.get("link"),
         }
         # Badge for the top-scored item
         if i == 0:

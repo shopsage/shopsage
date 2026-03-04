@@ -11,6 +11,7 @@ export interface Product {
   imageUrl?: string;
   badge?: string;
   image?: string;
+  url?: string;
 }
 
 export interface TrackedItem extends Product {
