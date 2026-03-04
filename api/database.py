@@ -1,12 +1,21 @@
-"""SQLite database engine and session management for ShopSage."""
+"""Database engine and session management for ShopSage.
+
+Supports SQLite (local dev) and PostgreSQL (production via DATABASE_URL env var).
+"""
 
 import os
 from sqlmodel import SQLModel, Session, create_engine
 
-DB_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "shopsage.db")
-DATABASE_URL = f"sqlite:///{DB_PATH}"
+_DATABASE_URL = os.getenv("DATABASE_URL")
 
-engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
+if _DATABASE_URL:
+    # Railway (and some other hosts) provide postgres:// — SQLAlchemy needs postgresql://
+    if _DATABASE_URL.startswith("postgres://"):
+        _DATABASE_URL = _DATABASE_URL.replace("postgres://", "postgresql://", 1)
+    engine = create_engine(_DATABASE_URL)
+else:
+    DB_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "shopsage.db")
+    engine = create_engine(f"sqlite:///{DB_PATH}", connect_args={"check_same_thread": False})
 
 
 def create_db_and_tables():
