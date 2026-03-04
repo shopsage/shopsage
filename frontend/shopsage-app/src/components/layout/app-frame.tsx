@@ -8,7 +8,7 @@ interface AppFrameProps {
 
 export function AppFrame({ children }: AppFrameProps) {
   return (
-    <div className="flex h-full w-full flex-col overflow-hidden bg-surface-bg">
+    <div className="flex h-dvh w-full flex-col overflow-hidden bg-surface-bg md:h-full">
       <div
         className="
           relative

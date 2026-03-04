@@ -24,19 +24,21 @@ export function BottomNav() {
     <nav
       className="
         glass
-        absolute
+        fixed md:absolute
         bottom-0
         left-0
         right-0
         z-50
         flex
-        h-[85px]
         items-center
         justify-around
         border-t
         border-neutral-200/30
-        pb-[25px]
       "
+      style={{
+        paddingBottom: "max(env(safe-area-inset-bottom, 0px), 16px)",
+        paddingTop: "12px",
+      }}
     >
       {navItems.map((item) => {
         const isActive = pathname === item.href || pathname.startsWith(item.href + "/");

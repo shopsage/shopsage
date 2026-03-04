@@ -35,10 +35,11 @@ export function TopBar() {
       className="absolute left-0 right-0 top-0 z-50 flex flex-col pointer-events-none"
       style={{
         background: `linear-gradient(to bottom, ${SURFACE_BG} 0%, ${SURFACE_BG} 62%, rgba(247,245,242,0) 100%)`,
+        paddingTop: "env(safe-area-inset-top, 0px)",
       }}
     >
-      {/* Status Bar Row */}
-      <div className="pointer-events-auto flex items-center justify-between px-6 pt-3 pb-2 text-[15px] font-semibold text-neutral-900">
+      {/* Status Bar Row — only visible inside desktop phone mockup, hidden on real mobile */}
+      <div className="hidden md:flex pointer-events-auto items-center justify-between px-6 pt-3 pb-2 text-[15px] font-semibold text-neutral-900">
         <div className="flex items-center gap-1 pl-2">
           <span className="font-semibold tracking-tight">{currentTime}</span>
         </div>
