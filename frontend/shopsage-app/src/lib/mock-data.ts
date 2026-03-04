@@ -84,7 +84,8 @@ export type MessageContent =
   | { type: "priceInput"; productId: string; currentPrice: number }
   | { type: "trackingConfirmation"; product: TrackedItem }
   | { type: "sources"; sourceGroups: SourceGroup[] }
-  | { type: "sourcePreview"; sources: SourceItem[]; productName?: string };
+  | { type: "sourcePreview"; sources: SourceItem[]; productName?: string }
+  | { type: "productButton"; productName: string };
 
 export interface PreferenceGroup {
   label: string;

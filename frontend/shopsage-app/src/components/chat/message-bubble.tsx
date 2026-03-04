@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { ArrowRight } from "lucide-react";
 import { ProductCarousel } from "@/components/product/product-carousel";
 import { SourceList } from "@/components/chat/source-list";
 import { SourcePreviewCards } from "@/components/chat/source-preview-cards";
@@ -19,6 +20,7 @@ interface MessageBubbleProps {
   onConfirmSelection?: () => void;
   onPriceConfirm?: (price: number) => void;
   onTrackProduct?: (product: TrackedItem) => void;
+  onProductSearch?: (productName: string) => void;
   enableTypewriter?: boolean;
   onScrollToBottom?: (options?: { force?: boolean; behavior?: ScrollBehavior }) => void;
 }
@@ -30,6 +32,7 @@ export function MessageBubble({
   onConfirmSelection,
   onPriceConfirm,
   onTrackProduct,
+  onProductSearch,
   enableTypewriter = false,
   onScrollToBottom,
 }: MessageBubbleProps) {
@@ -89,6 +92,7 @@ export function MessageBubble({
                 onPreferenceChange={onPreferenceChange}
                 onPriceConfirm={onPriceConfirm}
                 onTrackProduct={onTrackProduct}
+                onProductSearch={onProductSearch}
                 enableTypewriter={enableTypewriter}
                 onContentComplete={() => handleContentComplete(index)}
                 onScrollToBottom={onScrollToBottom}
@@ -145,6 +149,7 @@ interface MessageContentRendererProps {
   onPreferenceChange?: (groupLabel: string, value: string) => void;
   onPriceConfirm?: (price: number) => void;
   onTrackProduct?: (product: TrackedItem) => void;
+  onProductSearch?: (productName: string) => void;
   enableTypewriter?: boolean;
   onContentComplete?: () => void;
   onScrollToBottom?: (options?: { force?: boolean; behavior?: ScrollBehavior }) => void;
@@ -157,6 +162,7 @@ function MessageContentRenderer({
   onPreferenceChange,
   onPriceConfirm,
   onTrackProduct,
+  onProductSearch,
   enableTypewriter = false,
   onContentComplete,
   onScrollToBottom,
@@ -262,6 +268,27 @@ function MessageContentRenderer({
         <div className="w-full">
           <SourceList sourceGroups={content.sourceGroups} />
         </div>
+      );
+
+    case "productButton":
+      return (
+        <button
+          onClick={() => onProductSearch?.(content.productName)}
+          className="
+            inline-flex items-center gap-2
+            rounded-full
+            border border-primary-200 bg-primary-50
+            px-4 py-1.5
+            text-[13px] font-medium text-primary-700
+            hover:bg-primary-100 hover:border-primary-300
+            transition-all duration-150
+            active:scale-95
+            cursor-pointer
+          "
+        >
+          {content.productName}
+          <ArrowRight className="h-3.5 w-3.5" />
+        </button>
       );
 
     default:

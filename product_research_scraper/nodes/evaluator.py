@@ -16,7 +16,7 @@ def evaluate_user_query(state: AgentState) -> Dict[str, Any]:
 Your answer MUST be a JSON object with these exact keys:
 
 - top_pick: An object with:
-  - name: The product name (string)
+  - name: The SPECIFIC product model name, e.g. "Sony WH-1000XM5" or "Acer Nitro V 16 AMD" (string)
   - reason: A concise 1-2 sentence explanation of why this is the top pick (string)
   - evidence: An array of 1-2 objects, each a verbatim quote from the context supporting this pick:
     - quote: Exact word-for-word text from the research context (string)
@@ -24,7 +24,7 @@ Your answer MUST be a JSON object with these exact keys:
     - timestamp: The date string exactly as it appears in the context, e.g. "2024-01-15" — or null (string or null)
 
 - honourable_mentions: An array of 2-3 objects, each with:
-  - name: The product name (string)
+  - name: The SPECIFIC product model name (string)
   - reason: A concise 1 sentence explanation (string)
   - evidence: An array of 1-2 objects with the same {quote, author, timestamp} shape as above
 
@@ -33,6 +33,11 @@ Your answer MUST be a JSON object with these exact keys:
   - evidence: An array of 1-2 objects with the same {quote, author, timestamp} shape as above
 
 - confidence: Your confidence in the recommendation (0-1 float)
+
+STRICT RULE — Product names must be specific models, never product lines or series:
+  CORRECT: "Sony WH-1000XM5", "Acer Nitro V 16 AMD", "Logitech MX Master 3S", "Bose QuietComfort 45"
+  WRONG:   "Sony WH-1000XM series", "Acer Nitro lineup", "Logitech MX series", "Bose QuietComfort range"
+  If the research discusses a product line but names specific models within it, use the most recommended specific model as the name. You may reference the broader line in the reason field.
 
 Rules for evidence:
 - Quotes must be copied verbatim from the provided context — do not paraphrase

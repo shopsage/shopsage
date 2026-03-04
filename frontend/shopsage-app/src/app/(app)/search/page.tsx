@@ -41,6 +41,7 @@ export default function SearchPage() {
         onConfirmSelection={confirmSelection}
         onPriceConfirm={confirmPriceInput}
         onTrackProduct={handleTrackProduct}
+        onProductSearch={sendMessage}
       />
 
       {/* Suggestion Cards - Only show when no messages */}

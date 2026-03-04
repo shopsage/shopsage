@@ -238,6 +238,8 @@ def transform_product_result(agent_result: dict) -> list:
         if reason:
             intro += f" {reason}"
         content_blocks.append({"type": "text", "text": intro})
+        if top_pick_name:
+            content_blocks.append({"type": "productButton", "productName": top_pick_name})
 
     # Block 1b: Source preview cards (shown right after the top pick)
     reddit_sources = agent_result.get("reddit_sources", set())
@@ -280,6 +282,7 @@ def transform_product_result(agent_result: dict) -> list:
             if not mname:
                 continue
             content_blocks.append({"type": "text", "text": f"&bull; <strong>{mname}</strong> &mdash; {mreason}"})
+            content_blocks.append({"type": "productButton", "productName": mname})
             ev_sources = _build_evidence_preview_sources(
                 m.get("evidence", []), reddit_url_list, google_url_list
             )

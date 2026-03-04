@@ -14,6 +14,7 @@ interface ChatContainerProps {
   onConfirmSelection?: () => void;
   onPriceConfirm?: (price: number) => void;
   onTrackProduct?: (product: TrackedItem) => void;
+  onProductSearch?: (productName: string) => void;
 }
 
 export function ChatContainer({
@@ -24,6 +25,7 @@ export function ChatContainer({
   onConfirmSelection,
   onPriceConfirm,
   onTrackProduct,
+  onProductSearch,
 }: ChatContainerProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -90,6 +92,7 @@ export function ChatContainer({
             onConfirmSelection={onConfirmSelection}
             onPriceConfirm={onPriceConfirm}
             onTrackProduct={onTrackProduct}
+            onProductSearch={onProductSearch}
             enableTypewriter={index === messages.length - 1 && message.role === "assistant"}
             onScrollToBottom={handleScrollToBottom}
           />
