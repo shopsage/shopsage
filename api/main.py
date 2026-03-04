@@ -136,6 +136,7 @@ def transform_supplier_result(agent_result: dict) -> list:
             "rating": round(float(rec.get("rating", 0)), 1),
             "reviewCount": _format_review_count(rec.get("reviews", 0)),
             "platform": rec.get("seller") or rec.get("source", "Unknown"),
+            "image": rec.get("thumbnail"),
         }
         # Badge for the top-scored item
         if i == 0:
