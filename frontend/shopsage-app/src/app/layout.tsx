@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Plus_Jakarta_Sans, Playfair_Display } from "next/font/google";
 import "./globals.css";
 import { PhoneMockupWrapper } from "@/components/layout";
@@ -20,6 +20,12 @@ const playfairDisplay = Playfair_Display({
 export const metadata: Metadata = {
   title: "ShopSage",
   description: "AI-powered shopping assistant for Southeast Asia",
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover", // enables env(safe-area-inset-*) on iPhone
 };
 
 export default function RootLayout({
