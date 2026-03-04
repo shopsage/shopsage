@@ -4,7 +4,13 @@
       "Bash(mkdir:*)",
       "Bash(find:*)",
       "Bash(python:*)",
-      "Bash(powershell.exe -Command:*)"
+      "Bash(powershell.exe -Command:*)",
+      "mcp__ide__getDiagnostics",
+      "Bash(npx tsc:*)",
+      "Bash(ls:*)",
+      "Bash(xargs grep:*)",
+      "Bash(npx next:*)",
+      "Bash(pip install:*)"
     ],
     "deny": [],
     "ask": []

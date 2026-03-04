@@ -15,8 +15,8 @@ class AgentState(TypedDict):
     reddit_dump: str
     google_dump:str
     sources: Set[Tuple[str, str]]
-    reddit_sources: Set[Tuple[str, str]]
-    google_sources: Set[Tuple[str, str]]
+    reddit_sources: Set[Tuple[str, str, str]]
+    google_sources: Set[Tuple[str, str, str]]
 
     evaluation: str
 

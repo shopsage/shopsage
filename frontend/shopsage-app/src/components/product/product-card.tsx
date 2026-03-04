@@ -10,8 +10,12 @@ interface ProductCardProps {
 
 export function ProductCard({ product, onTrack }: ProductCardProps) {
   return (
-    <div
+    <a
+      href={product.url ?? undefined}
+      target={product.url ? "_blank" : undefined}
+      rel={product.url ? "noopener noreferrer" : undefined}
       className="
+        block
         min-w-[260px]
         cursor-pointer
         rounded-[var(--radius-md)]
@@ -22,6 +26,7 @@ export function ProductCard({ product, onTrack }: ProductCardProps) {
         transition-all
         duration-300
         active:scale-[0.98]
+        no-underline
       "
       style={{
         boxShadow: "var(--shadow-card)",
@@ -63,7 +68,6 @@ export function ProductCard({ product, onTrack }: ProductCardProps) {
             className="h-full w-full object-contain p-2"
           />
         ) : (
-          /* Headphones Icon (CSS Art) Placeholder */
           <div
             className="
               relative
@@ -149,7 +153,6 @@ export function ProductCard({ product, onTrack }: ProductCardProps) {
           Track Price
         </button>
       )}
-    </div>
+    </a>
   );
 }
-

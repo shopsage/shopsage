@@ -1,12 +1,13 @@
 "use client";
 
-import { Star, ExternalLink, MoreHorizontal } from "lucide-react";
+import { Star, Trash2, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { TrackedItem } from "@/lib/mock-data";
 
 interface TrackingCardProps {
   item: TrackedItem;
   onRemove?: (id: string) => void;
+  onSearch?: (title: string) => void;
   isCompact?: boolean;
   showBadge?: boolean;
 }
@@ -14,12 +15,10 @@ interface TrackingCardProps {
 export function TrackingCard({
   item,
   onRemove,
+  onSearch,
   isCompact = false,
   showBadge = false,
 }: TrackingCardProps) {
-  const priceDiff = item.currentPrice - item.targetPrice;
-  const isAtTarget = priceDiff <= 0;
-
   return (
     <div
       className={cn(
@@ -151,22 +150,9 @@ export function TrackingCard({
           </h3>
 
           {/* Price Info */}
-          <div className={cn("flex flex-col gap-1", isCompact ? "mt-2" : "mt-3")}>
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-neutral-500">Target Price</span>
-              <span className="text-base font-bold text-neutral-800">${item.targetPrice}</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-neutral-500">Current Price</span>
-              <span
-                className={cn(
-                  "text-base font-bold",
-                  isAtTarget ? "text-success" : "text-primary"
-                )}
-              >
-                ${item.currentPrice}
-              </span>
-            </div>
+          <div className={cn("flex items-center justify-between", isCompact ? "mt-2" : "mt-3")}>
+            <span className="text-sm text-neutral-500">Price when saved</span>
+            <span className="text-base font-bold text-neutral-800">${item.price}</span>
           </div>
 
           {!isCompact && (
@@ -182,48 +168,54 @@ export function TrackingCard({
           )}
 
           {/* Actions (Non-Compact) */}
-          {!isCompact && onRemove && (
+          {!isCompact && (
             <div className="mt-3 flex gap-2">
-              <button
-                className="
-                  flex
-                  flex-1
-                  items-center
-                  justify-center
-                  gap-1.5
-                  rounded-lg
-                  bg-surface-bg
-                  py-2
-                  text-[13px]
-                  font-semibold
-                  text-neutral-800
-                  transition-colors
-                  duration-200
-                  hover:bg-neutral-200
-                "
-              >
-                View
-              </button>
-              <button
-                onClick={() => onRemove(item.id)}
-                className="
-                  flex
-                  items-center
-                  justify-center
-                  rounded-lg
-                  bg-surface-bg
-                  px-3
-                  py-2
-                  text-neutral-400
-                  transition-colors
-                  duration-200
-                  hover:bg-neutral-200
-                  hover:text-neutral-600
-                "
-                aria-label="More options"
-              >
-                <MoreHorizontal className="h-5 w-5" strokeWidth={1.5} />
-              </button>
+              {onSearch && (
+                <button
+                  onClick={() => onSearch(item.title)}
+                  className="
+                    flex
+                    flex-1
+                    items-center
+                    justify-center
+                    gap-1.5
+                    rounded-lg
+                    bg-surface-bg
+                    py-2
+                    text-[13px]
+                    font-semibold
+                    text-neutral-800
+                    transition-colors
+                    duration-200
+                    hover:bg-neutral-200
+                  "
+                >
+                  <Search className="h-3.5 w-3.5" />
+                  Search
+                </button>
+              )}
+              {onRemove && (
+                <button
+                  onClick={() => onRemove(item.id)}
+                  className="
+                    flex
+                    items-center
+                    justify-center
+                    rounded-lg
+                    bg-surface-bg
+                    px-3
+                    py-2
+                    text-neutral-400
+                    transition-colors
+                    duration-200
+                    hover:bg-red-50
+                    hover:text-red-500
+                  "
+                  aria-label="Remove item"
+                >
+                  <Trash2 className="h-4 w-4" strokeWidth={1.5} />
+                </button>
+              )}
             </div>
           )}
 

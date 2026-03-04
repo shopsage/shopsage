@@ -11,15 +11,42 @@ def evaluate_user_query(state: AgentState) -> Dict[str, Any]:
     reddit_dump = state["reddit_dump"]
     google_dump = state["google_dump"]
 
-    system_prompt = """You are an expert evaluator, able to answer the user's question based on the provided context.
-Your task is to analyze the user query and answer it based on the provided context, explaining your decision making process and reasoning.
+    system_prompt = """You are an expert product research evaluator. Analyze the user's question and the provided research context to give a clear, structured recommendation.
 
-Your answer should be a JSON object with this following information:
-- evaluation: Your evaluation of the users query based on the context that is provided to you as well as your reasoning.
-- confidence: Your confidence in the extraction (0-1)
+Your answer MUST be a JSON object with these exact keys:
 
-Return your response as a JSON object with these exact keys.
-    """
+- top_pick: An object with:
+  - name: The SPECIFIC product model name, e.g. "Sony WH-1000XM5" or "Acer Nitro V 16 AMD" (string)
+  - reason: A concise 1-2 sentence explanation of why this is the top pick (string)
+  - evidence: An array of 1-2 objects, each a verbatim quote from the context supporting this pick:
+    - quote: Exact word-for-word text from the research context (string)
+    - author: The Reddit username exactly as it appears, e.g. "u/username" — or null if from a web source (string or null)
+    - timestamp: The date string exactly as it appears in the context, e.g. "2024-01-15" — or null (string or null)
+
+- honourable_mentions: An array of 2-3 objects, each with:
+  - name: The SPECIFIC product model name (string)
+  - reason: A concise 1 sentence explanation (string)
+  - evidence: An array of 1-2 objects with the same {quote, author, timestamp} shape as above
+
+- key_findings: An array of 3-5 objects, each with:
+  - finding: A short bullet point string summarizing one important research finding (string)
+  - evidence: An array of 1-2 objects with the same {quote, author, timestamp} shape as above
+
+- confidence: Your confidence in the recommendation (0-1 float)
+
+STRICT RULE — Product names must be specific models, never product lines or series:
+  CORRECT: "Sony WH-1000XM5", "Acer Nitro V 16 AMD", "Logitech MX Master 3S", "Bose QuietComfort 45"
+  WRONG:   "Sony WH-1000XM series", "Acer Nitro lineup", "Logitech MX series", "Bose QuietComfort range"
+  If the research discusses a product line but names specific models within it, use the most recommended specific model as the name. You may reference the broader line in the reason field.
+
+Rules for evidence:
+- Quotes must be copied verbatim from the provided context — do not paraphrase
+- Author and timestamp must be taken exactly from the "[Author: u/xxx | Date: YYYY-MM-DD]" lines in the context
+- If a finding or mention has no supporting quote in the context, set evidence to []
+
+If you cannot identify a clear top pick or there is not enough context, set top_pick to null and provide your best findings in key_findings.
+
+Return ONLY valid JSON. No markdown, no explanation outside the JSON."""
 
     user_prompt = f"User Question: {user_query}\nReddit context: {reddit_dump}\nGoogle context{google_dump}"
 
@@ -38,7 +65,9 @@ Return your response as a JSON object with these exact keys.
             processed_evaluation = json.loads(response_clean)
 
             required_fields = [
-                "evaluation",
+                "top_pick",
+                "honourable_mentions",
+                "key_findings",
                 "confidence"
             ]
             for field in required_fields:
@@ -48,7 +77,9 @@ Return your response as a JSON object with these exact keys.
 
         except json.JSONDecodeError as e:
             processed_evaluation = {
-                "evaluation": "I am unable to give you appropriate data based off your request, please try again with a new query.",
+                "top_pick": None,
+                "honourable_mentions": [],
+                "key_findings": [{"finding": "Unable to provide recommendation based on available data.", "evidence": []}],
                 "confidence": 0.0
             }
             error = f"Failed to parse LLM response as JSON: {str(e)}"
@@ -70,7 +101,12 @@ Return your response as a JSON object with these exact keys.
 
         error_msg = f"Evaluation failed: {str(e)}"
 
-        fallback_evaluation = {"evaluation": "I am unable to give you appropriate data based off your request, please try again with a new query", "confidence": 0.0}
+        fallback_evaluation = {
+            "top_pick": None,
+            "honourable_mentions": [],
+            "key_findings": [{"finding": "Unable to provide recommendation based on available data.", "evidence": []}],
+            "confidence": 0.0
+        }
 
         return {
             "evaluation": fallback_evaluation,

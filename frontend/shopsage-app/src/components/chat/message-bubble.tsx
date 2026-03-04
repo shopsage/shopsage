@@ -2,12 +2,15 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { ArrowRight, Bookmark, BookmarkCheck } from "lucide-react";
 import { ProductCarousel } from "@/components/product/product-carousel";
+import { SourceList } from "@/components/chat/source-list";
+import { SourcePreviewCards } from "@/components/chat/source-preview-cards";
 import { FilterChips } from "@/components/product/filter-chips";
 import { PriceInput } from "@/components/product/price-input";
 import { TrackingCard } from "@/components/tracking/tracking-card";
 import { useTypewriter } from "@/hooks/use-typewriter";
-import type { DemoMessage, MessageContent, TrackedItem } from "@/lib/mock-data";
+import type { DemoMessage, MessageContent, TrackedItem, Product } from "@/lib/mock-data";
 import { cn } from "@/lib/utils";
 
 interface MessageBubbleProps {
@@ -17,6 +20,9 @@ interface MessageBubbleProps {
   onConfirmSelection?: () => void;
   onPriceConfirm?: (price: number) => void;
   onTrackProduct?: (product: TrackedItem) => void;
+  onProductSearch?: (productName: string) => void;
+  onSaveProduct?: (query: string, products: Product[]) => void;
+  isProductSaved?: (name: string) => boolean;
   enableTypewriter?: boolean;
   onScrollToBottom?: (options?: { force?: boolean; behavior?: ScrollBehavior }) => void;
 }
@@ -28,6 +34,9 @@ export function MessageBubble({
   onConfirmSelection,
   onPriceConfirm,
   onTrackProduct,
+  onProductSearch,
+  onSaveProduct,
+  isProductSaved,
   enableTypewriter = false,
   onScrollToBottom,
 }: MessageBubbleProps) {
@@ -87,6 +96,9 @@ export function MessageBubble({
                 onPreferenceChange={onPreferenceChange}
                 onPriceConfirm={onPriceConfirm}
                 onTrackProduct={onTrackProduct}
+                onProductSearch={onProductSearch}
+                onSaveProduct={onSaveProduct}
+                isProductSaved={isProductSaved}
                 enableTypewriter={enableTypewriter}
                 onContentComplete={() => handleContentComplete(index)}
                 onScrollToBottom={onScrollToBottom}
@@ -143,6 +155,9 @@ interface MessageContentRendererProps {
   onPreferenceChange?: (groupLabel: string, value: string) => void;
   onPriceConfirm?: (price: number) => void;
   onTrackProduct?: (product: TrackedItem) => void;
+  onProductSearch?: (productName: string) => void;
+  onSaveProduct?: (query: string, products: Product[]) => void;
+  isProductSaved?: (name: string) => boolean;
   enableTypewriter?: boolean;
   onContentComplete?: () => void;
   onScrollToBottom?: (options?: { force?: boolean; behavior?: ScrollBehavior }) => void;
@@ -155,6 +170,9 @@ function MessageContentRenderer({
   onPreferenceChange,
   onPriceConfirm,
   onTrackProduct,
+  onProductSearch,
+  onSaveProduct,
+  isProductSaved,
   enableTypewriter = false,
   onContentComplete,
   onScrollToBottom,
@@ -225,12 +243,41 @@ function MessageContentRenderer({
         </div>
       );
 
-    case "products":
+    case "products": {
+      const query = content.extractedQuery;
+      const saved = query ? (isProductSaved?.(query) ?? false) : false;
+
+      const handleTrack = () => {
+        if (!query || !onSaveProduct) return;
+        onSaveProduct(query, content.products);
+      };
+
       return (
         <div className="w-full">
+          {query && onSaveProduct && (
+            <button
+              onClick={handleTrack}
+              className={`
+                mb-3 inline-flex items-center gap-2
+                rounded-full border px-4 py-1.5
+                text-[13px] font-medium
+                transition-all duration-150 active:scale-95
+                ${saved
+                  ? "border-primary-300 bg-primary-50 text-primary-700"
+                  : "border-neutral-200 bg-white text-neutral-600 hover:border-primary-200 hover:bg-primary-50 hover:text-primary-700"
+                }
+              `}
+            >
+              {saved
+                ? <><BookmarkCheck className="h-3.5 w-3.5" /> Saved — {query}</>
+                : <><Bookmark className="h-3.5 w-3.5" /> Track this item</>
+              }
+            </button>
+          )}
           <ProductCarousel products={content.products} />
         </div>
       );
+    }
 
     case "priceInput":
       return (
@@ -246,6 +293,41 @@ function MessageContentRenderer({
           product={content.product}
           onTrackProduct={onTrackProduct}
         />
+      );
+
+    case "sourcePreview":
+      return (
+        <div className="w-full">
+          <SourcePreviewCards sources={content.sources} productName={content.productName} />
+        </div>
+      );
+
+    case "sources":
+      return (
+        <div className="w-full">
+          <SourceList sourceGroups={content.sourceGroups} />
+        </div>
+      );
+
+    case "productButton":
+      return (
+        <button
+          onClick={() => onProductSearch?.(content.productName)}
+          className="
+            inline-flex items-center gap-2
+            rounded-full
+            border border-primary-200 bg-primary-50
+            px-4 py-1.5
+            text-[13px] font-medium text-primary-700
+            hover:bg-primary-100 hover:border-primary-300
+            transition-all duration-150
+            active:scale-95
+            cursor-pointer
+          "
+        >
+          {content.productName}
+          <ArrowRight className="h-3.5 w-3.5" />
+        </button>
       );
 
     default:
@@ -268,7 +350,9 @@ function TypewriterText({ text, isUser, enableTypewriter, onComplete, onScrollTo
   const plainText = text
     .replace(/<br\s*\/?>/gi, "\n")
     .replace(/<\/p>/gi, "\n\n")
-    .replace(/<[^>]*>/g, "");
+    .replace(/<[^>]*>/g, "")
+    .replace(/&bull;/g, "•")
+    .replace(/&mdash;/g, "-");
 
   const { displayedText, isComplete } = useTypewriter({
     text: plainText,
