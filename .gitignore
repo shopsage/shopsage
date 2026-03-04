@@ -60,3 +60,6 @@ htmlcov/
 
 # pytest
 .pytest_cache/
+
+# Database
+shopsage.db

@@ -1,25 +1,50 @@
 """FastAPI application for hosting the ShopSage orchestrator and research agents"""
 
+import json
 import os
 import re
 import uuid
+from contextlib import asynccontextmanager
+from datetime import datetime, timezone
 from typing import Optional, List
-from fastapi import FastAPI, HTTPException
+
+from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
+from sqlmodel import Session, select
 from dotenv import load_dotenv
 
 from google_shopping_scraper.agent import run_research_agent
 from google_shopping_scraper.tools.llm_provider import LLMClient
 from orchestrator.agent import run_orchestrator
 
+from api.database import create_db_and_tables, get_session
+from api.models import User, Chat, ChatMessage as ChatMessageDB, SavedProduct
+from api.auth import (
+    hash_password,
+    verify_password,
+    create_access_token,
+    get_current_user,
+    get_optional_user,
+)
+
 load_dotenv()
+
+
+# ── Lifespan ─────────────────────────────────────────────────────────────────
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    create_db_and_tables()
+    yield
+
 
 # Initialize FastAPI app
 app = FastAPI(
     title="ShopSage - AI Shopping Assistant",
     description="AI-powered agent for product research and supplier comparison",
-    version="0.2.0",
+    version="0.3.0",
+    lifespan=lifespan,
 )
 
 # Add CORS middleware
@@ -34,14 +59,15 @@ app.add_middleware(
 
 # ── Request/Response models ──────────────────────────────────────────────────
 
-class ChatMessage(BaseModel):
+class ChatMessageSchema(BaseModel):
     role: str
     content: str
 
 
 class ChatRequest(BaseModel):
-    messages: List[ChatMessage] = Field(default_factory=list, description="Conversation history")
+    messages: List[ChatMessageSchema] = Field(default_factory=list, description="Conversation history")
     latest_message: str = Field(..., description="The most recent user message")
+    chat_id: Optional[str] = Field(None, description="Existing chat ID for persistence")
 
 
 class ResearchRequest(BaseModel):
@@ -74,6 +100,42 @@ class ProvidersResponse(BaseModel):
     available_providers: list[str]
 
 
+# Auth request/response models
+class SignupRequest(BaseModel):
+    email: str
+    password: str
+    display_name: str = ""
+
+
+class LoginRequest(BaseModel):
+    email: str
+    password: str
+
+
+class UserResponse(BaseModel):
+    id: str
+    email: str
+    display_name: str
+    created_at: str
+
+
+class AuthResponse(BaseModel):
+    token: str
+    user: UserResponse
+
+
+# Chat CRUD models
+class ChatRenameRequest(BaseModel):
+    title: str
+
+
+# Saved products models
+class SaveProductRequest(BaseModel):
+    product_name: str
+    cheapest_price: Optional[float] = None
+    image: Optional[str] = None
+
+
 # ── Transformer helpers ──────────────────────────────────────────────────────
 
 def _slugify(text: str) -> str:
@@ -95,6 +157,24 @@ def _format_review_count(count) -> str:
     if count >= 1000:
         return f"{count / 1000:.1f}k"
     return str(count)
+
+
+def _summarise_content_blocks(content: list) -> str:
+    """Summarise rich content blocks into plain text for LLM context."""
+    parts = []
+    for block in content:
+        btype = block.get("type", "")
+        if btype == "text":
+            text = re.sub(r"<[^>]*>", "", block.get("text", ""))
+            text = text.replace("&bull;", "*").replace("&mdash;", "-")
+            parts.append(text)
+        elif btype == "products":
+            parts.append(f"[{len(block.get('products', []))} product results shown]")
+        elif btype == "sources":
+            parts.append("[research sources shown]")
+        elif btype == "productButton":
+            parts.append(f"[product: {block.get('productName', '')}]")
+    return " ".join(parts)
 
 
 def transform_supplier_result(agent_result: dict) -> list:
@@ -332,17 +412,110 @@ def transform_product_result(agent_result: dict) -> list:
     return content_blocks
 
 
+# ── Auth endpoints ────────────────────────────────────────────────────────────
+
+@app.post("/api/auth/signup", response_model=AuthResponse)
+async def signup(body: SignupRequest, session: Session = Depends(get_session)):
+    if not body.email or not body.password:
+        raise HTTPException(status_code=400, detail="Email and password required")
+    if len(body.password) < 6:
+        raise HTTPException(status_code=400, detail="Password must be at least 6 characters")
+
+    existing = session.exec(select(User).where(User.email == body.email.lower())).first()
+    if existing:
+        raise HTTPException(status_code=409, detail="Email already registered")
+
+    user = User(
+        email=body.email.lower().strip(),
+        hashed_password=hash_password(body.password),
+        display_name=body.display_name.strip() or body.email.split("@")[0],
+    )
+    session.add(user)
+    session.commit()
+    session.refresh(user)
+
+    token = create_access_token(user.id)
+    return AuthResponse(
+        token=token,
+        user=UserResponse(
+            id=user.id,
+            email=user.email,
+            display_name=user.display_name,
+            created_at=user.created_at.isoformat(),
+        ),
+    )
+
+
+@app.post("/api/auth/login", response_model=AuthResponse)
+async def login(body: LoginRequest, session: Session = Depends(get_session)):
+    user = session.exec(select(User).where(User.email == body.email.lower())).first()
+    if not user or not verify_password(body.password, user.hashed_password):
+        raise HTTPException(status_code=401, detail="Invalid email or password")
+
+    token = create_access_token(user.id)
+    return AuthResponse(
+        token=token,
+        user=UserResponse(
+            id=user.id,
+            email=user.email,
+            display_name=user.display_name,
+            created_at=user.created_at.isoformat(),
+        ),
+    )
+
+
+@app.get("/api/auth/me", response_model=UserResponse)
+async def get_me(user: User = Depends(get_current_user)):
+    return UserResponse(
+        id=user.id,
+        email=user.email,
+        display_name=user.display_name,
+        created_at=user.created_at.isoformat(),
+    )
+
+
 # ── Chat endpoint (main integration point) ───────────────────────────────────
 
 @app.post("/api/chat")
-async def chat(request: ChatRequest):
+async def chat(
+    request: ChatRequest,
+    user: Optional[User] = Depends(get_optional_user),
+    session: Session = Depends(get_session),
+):
     """
     Main chat endpoint for the frontend.
 
     Accepts conversation history + latest message, routes through the
     orchestrator, and returns a formatted assistant message.
+    When authenticated, persists messages to the database.
     """
     try:
+        # ── Persistence: resolve or create chat ──
+        db_chat: Optional[Chat] = None
+        if user:
+            if request.chat_id:
+                db_chat = session.get(Chat, request.chat_id)
+                if not db_chat or db_chat.user_id != user.id:
+                    raise HTTPException(status_code=404, detail="Chat not found")
+            else:
+                title = request.latest_message[:50]
+                if len(request.latest_message) > 50:
+                    title += "..."
+                db_chat = Chat(user_id=user.id, title=title)
+                session.add(db_chat)
+                session.commit()
+                session.refresh(db_chat)
+
+            # Save user message
+            user_msg = ChatMessageDB(
+                chat_id=db_chat.id,
+                role="user",
+                content_json=json.dumps([{"type": "text", "text": request.latest_message}]),
+                plain_text=request.latest_message,
+            )
+            session.add(user_msg)
+            session.commit()
+
         # Convert Pydantic models to plain dicts for the orchestrator
         messages = [{"role": m.role, "content": m.content} for m in request.messages]
 
@@ -367,21 +540,245 @@ async def chat(request: ChatRequest):
             if errors:
                 content.append({"type": "text", "text": f"Error: {errors[-1]}"})
 
+        # Inject extractedQuery into products blocks so it persists when chat is reloaded
+        extracted_query = state.get("extracted_query", "")
+        if extracted_query:
+            for block in content:
+                if block.get("type") == "products":
+                    block["extractedQuery"] = extracted_query
+
+        # ── Persistence: save assistant message ──
+        if user and db_chat:
+            assistant_msg = ChatMessageDB(
+                chat_id=db_chat.id,
+                role="assistant",
+                content_json=json.dumps(content),
+                plain_text=_summarise_content_blocks(content),
+            )
+            session.add(assistant_msg)
+            db_chat.updated_at = datetime.now(timezone.utc)
+            session.add(db_chat)
+            session.commit()
+
         response = {
             "id": f"assistant-{uuid.uuid4().hex[:8]}",
             "role": "assistant",
             "content": content,
             "route": route,
-            "extracted_query": state.get("extracted_query", ""),
+            "extracted_query": extracted_query,
+            "chat_id": db_chat.id if db_chat else None,
         }
 
         return response
 
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(
             status_code=500,
             detail={"message": "Chat processing failed", "error": str(e)},
         )
+
+
+# ── Chat CRUD endpoints ──────────────────────────────────────────────────────
+
+@app.get("/api/chats")
+async def list_chats(
+    user: User = Depends(get_current_user),
+    session: Session = Depends(get_session),
+):
+    """List user's chats, ordered by updated_at desc."""
+    chats = session.exec(
+        select(Chat)
+        .where(Chat.user_id == user.id)
+        .order_by(Chat.updated_at.desc())
+    ).all()
+
+    result = []
+    for c in chats:
+        # Get first user message as preview
+        first_msg = session.exec(
+            select(ChatMessageDB)
+            .where(ChatMessageDB.chat_id == c.id, ChatMessageDB.role == "user")
+            .order_by(ChatMessageDB.created_at.asc())
+        ).first()
+        preview = ""
+        if first_msg:
+            preview = first_msg.plain_text[:80]
+
+        result.append({
+            "id": c.id,
+            "title": c.title,
+            "preview": preview,
+            "updated_at": c.updated_at.isoformat(),
+            "created_at": c.created_at.isoformat(),
+        })
+
+    return result
+
+
+@app.get("/api/chats/{chat_id}")
+async def get_chat(
+    chat_id: str,
+    user: User = Depends(get_current_user),
+    session: Session = Depends(get_session),
+):
+    """Get full chat with messages."""
+    chat = session.get(Chat, chat_id)
+    if not chat or chat.user_id != user.id:
+        raise HTTPException(status_code=404, detail="Chat not found")
+
+    msgs = session.exec(
+        select(ChatMessageDB)
+        .where(ChatMessageDB.chat_id == chat_id)
+        .order_by(ChatMessageDB.created_at.asc())
+    ).all()
+
+    messages = []
+    for m in msgs:
+        try:
+            content = json.loads(m.content_json)
+        except (json.JSONDecodeError, TypeError):
+            content = [{"type": "text", "text": m.plain_text}]
+
+        messages.append({
+            "id": m.id,
+            "role": m.role,
+            "content": content,
+            "timestamp": m.created_at.isoformat(),
+        })
+
+    return {
+        "id": chat.id,
+        "title": chat.title,
+        "messages": messages,
+        "created_at": chat.created_at.isoformat(),
+        "updated_at": chat.updated_at.isoformat(),
+    }
+
+
+@app.delete("/api/chats/{chat_id}")
+async def delete_chat(
+    chat_id: str,
+    user: User = Depends(get_current_user),
+    session: Session = Depends(get_session),
+):
+    """Delete a chat and all its messages."""
+    chat = session.get(Chat, chat_id)
+    if not chat or chat.user_id != user.id:
+        raise HTTPException(status_code=404, detail="Chat not found")
+
+    # Delete messages first
+    msgs = session.exec(
+        select(ChatMessageDB).where(ChatMessageDB.chat_id == chat_id)
+    ).all()
+    for m in msgs:
+        session.delete(m)
+
+    session.delete(chat)
+    session.commit()
+    return {"ok": True}
+
+
+@app.patch("/api/chats/{chat_id}")
+async def rename_chat(
+    chat_id: str,
+    body: ChatRenameRequest,
+    user: User = Depends(get_current_user),
+    session: Session = Depends(get_session),
+):
+    """Rename a chat."""
+    chat = session.get(Chat, chat_id)
+    if not chat or chat.user_id != user.id:
+        raise HTTPException(status_code=404, detail="Chat not found")
+
+    chat.title = body.title.strip()
+    session.add(chat)
+    session.commit()
+    return {"ok": True, "title": chat.title}
+
+
+# ── Saved Products endpoints ─────────────────────────────────────────────────
+
+@app.post("/api/saved-products")
+async def save_product(
+    body: SaveProductRequest,
+    user: User = Depends(get_current_user),
+    session: Session = Depends(get_session),
+):
+    """Save or upsert a product. Dedup by product_name (case-insensitive)."""
+    existing = session.exec(
+        select(SavedProduct).where(
+            SavedProduct.user_id == user.id,
+            SavedProduct.product_name.ilike(body.product_name),
+        )
+    ).first()
+
+    now = datetime.now(timezone.utc)
+
+    if existing:
+        if body.cheapest_price is not None:
+            existing.cheapest_price = body.cheapest_price
+        if body.image is not None:
+            existing.image = body.image
+        existing.last_searched_at = now
+        session.add(existing)
+        session.commit()
+        session.refresh(existing)
+        return {"id": existing.id, "upserted": True}
+
+    sp = SavedProduct(
+        user_id=user.id,
+        product_name=body.product_name,
+        cheapest_price=body.cheapest_price,
+        image=body.image,
+        last_searched_at=now,
+    )
+    session.add(sp)
+    session.commit()
+    session.refresh(sp)
+    return {"id": sp.id, "upserted": False}
+
+
+@app.get("/api/saved-products")
+async def list_saved_products(
+    user: User = Depends(get_current_user),
+    session: Session = Depends(get_session),
+):
+    """List user's saved products, ordered by last_searched_at desc."""
+    products = session.exec(
+        select(SavedProduct)
+        .where(SavedProduct.user_id == user.id)
+        .order_by(SavedProduct.last_searched_at.desc())
+    ).all()
+
+    return [
+        {
+            "id": p.id,
+            "product_name": p.product_name,
+            "cheapest_price": p.cheapest_price,
+            "image": p.image,
+            "last_searched_at": p.last_searched_at.isoformat(),
+            "created_at": p.created_at.isoformat(),
+        }
+        for p in products
+    ]
+
+
+@app.delete("/api/saved-products/{product_id}")
+async def delete_saved_product(
+    product_id: str,
+    user: User = Depends(get_current_user),
+    session: Session = Depends(get_session),
+):
+    """Delete a saved product."""
+    sp = session.get(SavedProduct, product_id)
+    if not sp or sp.user_id != user.id:
+        raise HTTPException(status_code=404, detail="Saved product not found")
+
+    session.delete(sp)
+    session.commit()
+    return {"ok": True}
 
 
 # ── Existing endpoints ───────────────────────────────────────────────────────
@@ -391,9 +788,14 @@ async def root():
     """Root endpoint"""
     return {
         "message": "ShopSage AI Shopping Assistant API",
-        "version": "0.2.0",
+        "version": "0.3.0",
         "endpoints": {
             "POST /api/chat": "Chat with the orchestrator (main endpoint)",
+            "POST /api/auth/signup": "Create account",
+            "POST /api/auth/login": "Log in",
+            "GET /api/auth/me": "Get current user",
+            "GET /api/chats": "List chats",
+            "GET /api/chats/{id}": "Get chat with messages",
             "POST /research": "Direct supplier research query",
             "GET /health": "Health check",
             "GET /providers": "List available LLM providers",
@@ -406,7 +808,7 @@ async def health_check():
     """Health check endpoint"""
     return HealthResponse(
         status="healthy",
-        version="0.2.0",
+        version="0.3.0",
         configured_provider=os.getenv("LLM_PROVIDER", "gemini"),
     )
 

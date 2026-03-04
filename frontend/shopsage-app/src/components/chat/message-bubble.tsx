@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Bookmark, BookmarkCheck } from "lucide-react";
 import { ProductCarousel } from "@/components/product/product-carousel";
 import { SourceList } from "@/components/chat/source-list";
 import { SourcePreviewCards } from "@/components/chat/source-preview-cards";
@@ -10,7 +10,7 @@ import { FilterChips } from "@/components/product/filter-chips";
 import { PriceInput } from "@/components/product/price-input";
 import { TrackingCard } from "@/components/tracking/tracking-card";
 import { useTypewriter } from "@/hooks/use-typewriter";
-import type { DemoMessage, MessageContent, TrackedItem } from "@/lib/mock-data";
+import type { DemoMessage, MessageContent, TrackedItem, Product } from "@/lib/mock-data";
 import { cn } from "@/lib/utils";
 
 interface MessageBubbleProps {
@@ -21,6 +21,8 @@ interface MessageBubbleProps {
   onPriceConfirm?: (price: number) => void;
   onTrackProduct?: (product: TrackedItem) => void;
   onProductSearch?: (productName: string) => void;
+  onSaveProduct?: (query: string, products: Product[]) => void;
+  isProductSaved?: (name: string) => boolean;
   enableTypewriter?: boolean;
   onScrollToBottom?: (options?: { force?: boolean; behavior?: ScrollBehavior }) => void;
 }
@@ -33,6 +35,8 @@ export function MessageBubble({
   onPriceConfirm,
   onTrackProduct,
   onProductSearch,
+  onSaveProduct,
+  isProductSaved,
   enableTypewriter = false,
   onScrollToBottom,
 }: MessageBubbleProps) {
@@ -93,6 +97,8 @@ export function MessageBubble({
                 onPriceConfirm={onPriceConfirm}
                 onTrackProduct={onTrackProduct}
                 onProductSearch={onProductSearch}
+                onSaveProduct={onSaveProduct}
+                isProductSaved={isProductSaved}
                 enableTypewriter={enableTypewriter}
                 onContentComplete={() => handleContentComplete(index)}
                 onScrollToBottom={onScrollToBottom}
@@ -150,6 +156,8 @@ interface MessageContentRendererProps {
   onPriceConfirm?: (price: number) => void;
   onTrackProduct?: (product: TrackedItem) => void;
   onProductSearch?: (productName: string) => void;
+  onSaveProduct?: (query: string, products: Product[]) => void;
+  isProductSaved?: (name: string) => boolean;
   enableTypewriter?: boolean;
   onContentComplete?: () => void;
   onScrollToBottom?: (options?: { force?: boolean; behavior?: ScrollBehavior }) => void;
@@ -163,6 +171,8 @@ function MessageContentRenderer({
   onPriceConfirm,
   onTrackProduct,
   onProductSearch,
+  onSaveProduct,
+  isProductSaved,
   enableTypewriter = false,
   onContentComplete,
   onScrollToBottom,
@@ -233,12 +243,41 @@ function MessageContentRenderer({
         </div>
       );
 
-    case "products":
+    case "products": {
+      const query = content.extractedQuery;
+      const saved = query ? (isProductSaved?.(query) ?? false) : false;
+
+      const handleTrack = () => {
+        if (!query || !onSaveProduct) return;
+        onSaveProduct(query, content.products);
+      };
+
       return (
         <div className="w-full">
+          {query && onSaveProduct && (
+            <button
+              onClick={handleTrack}
+              className={`
+                mb-3 inline-flex items-center gap-2
+                rounded-full border px-4 py-1.5
+                text-[13px] font-medium
+                transition-all duration-150 active:scale-95
+                ${saved
+                  ? "border-primary-300 bg-primary-50 text-primary-700"
+                  : "border-neutral-200 bg-white text-neutral-600 hover:border-primary-200 hover:bg-primary-50 hover:text-primary-700"
+                }
+              `}
+            >
+              {saved
+                ? <><BookmarkCheck className="h-3.5 w-3.5" /> Saved — {query}</>
+                : <><Bookmark className="h-3.5 w-3.5" /> Track this item</>
+              }
+            </button>
+          )}
           <ProductCarousel products={content.products} />
         </div>
       );
+    }
 
     case "priceInput":
       return (

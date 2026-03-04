@@ -40,4 +40,3 @@ export function ProductCarousel({ products, onTrack }: ProductCarouselProps) {
     </div>
   );
 }
-

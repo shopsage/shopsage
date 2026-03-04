@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from "react";
 import type { DemoMessage, MessageContent, PreferenceGroup } from "@/lib/mock-data";
+import { apiFetch } from "@/lib/api";
 
 type ThinkingStage =
   | "researching"
@@ -9,8 +10,6 @@ type ThinkingStage =
   | "finding-prices"
   | "comparing"
   | "general";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 interface UseChatReturn {
   messages: DemoMessage[];
@@ -22,6 +21,9 @@ interface UseChatReturn {
   thinkingStage: ThinkingStage;
   reset: () => void;
   setPriceInputValue: (price: number) => void;
+  chatId: string | null;
+  loadChat: (chatId: string) => Promise<void>;
+  isLoadedChat: boolean;
 }
 
 /**
@@ -55,6 +57,8 @@ export function useChat(): UseChatReturn {
   const [messages, setMessages] = useState<DemoMessage[]>([]);
   const [isTyping, setIsTyping] = useState(false);
   const [thinkingStage, setThinkingStage] = useState<ThinkingStage>("general");
+  const [chatId, setChatId] = useState<string | null>(null);
+  const [isLoadedChat, setIsLoadedChat] = useState(false);
 
   const sendMessage = useCallback(
     async (text: string) => {
@@ -70,7 +74,8 @@ export function useChat(): UseChatReturn {
       const currentMessages = [...messages, userMessage];
       setMessages(currentMessages);
 
-      // 2. Show typing indicator
+      // 2. Show typing indicator (new message — disable loaded-chat suppression)
+      setIsLoadedChat(false);
       setIsTyping(true);
       setThinkingStage(determineThinkingStage(text));
 
@@ -81,13 +86,13 @@ export function useChat(): UseChatReturn {
           content: summariseContent(msg.content),
         }));
 
-        // 4. POST to the orchestrator API
-        const response = await fetch(`${API_URL}/api/chat`, {
+        // 4. POST to the orchestrator API (with auth via apiFetch)
+        const response = await apiFetch("/api/chat", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             messages: historyForApi,
             latest_message: text,
+            chat_id: chatId,
           }),
         });
 
@@ -97,13 +102,25 @@ export function useChat(): UseChatReturn {
 
         const data = await response.json();
 
-        // 5. Append assistant response to messages
+        // Track chat_id from server
+        if (data.chat_id) {
+          setChatId(data.chat_id);
+        }
+
+        // 5. Build assistant message, injecting extractedQuery into products blocks
+        const contentBlocks: MessageContent[] = (
+          data.content || [{ type: "text", text: "Sorry, I received an empty response." }]
+        ).map((block: MessageContent) => {
+          if (block.type === "products" && data.extracted_query) {
+            return { ...block, extractedQuery: data.extracted_query };
+          }
+          return block;
+        });
+
         const assistantMessage: DemoMessage = {
           id: data.id || `assistant-${Date.now()}`,
           role: "assistant",
-          content: data.content || [
-            { type: "text", text: "Sorry, I received an empty response." },
-          ],
+          content: contentBlocks,
           timestamp: new Date(),
         };
 
@@ -116,7 +133,7 @@ export function useChat(): UseChatReturn {
           content: [
             {
               type: "text",
-              text: `Sorry, I couldn't process your request. Please make sure the backend server is running on <strong>${API_URL}</strong>.`,
+              text: "Sorry, I couldn't process your request. Please make sure the backend server is running.",
             },
           ],
           timestamp: new Date(),
@@ -126,8 +143,30 @@ export function useChat(): UseChatReturn {
         setIsTyping(false);
       }
     },
-    [messages]
+    [messages, chatId]
   );
+
+  const loadChat = useCallback(async (id: string) => {
+    try {
+      const res = await apiFetch(`/api/chats/${id}`);
+      if (!res.ok) throw new Error("Failed to load chat");
+      const data = await res.json();
+
+      setChatId(data.id);
+      setIsLoadedChat(true);
+      const loadedMessages: DemoMessage[] = data.messages.map(
+        (m: { id: string; role: "user" | "assistant"; content: MessageContent[]; timestamp: string }) => ({
+          id: m.id,
+          role: m.role,
+          content: m.content,
+          timestamp: new Date(m.timestamp),
+        })
+      );
+      setMessages(loadedMessages);
+    } catch {
+      // Silently fail — user will see empty chat
+    }
+  }, []);
 
   // Preference and price input interactions (stubs — not wired to backend yet)
   const updatePreferences = useCallback(
@@ -174,6 +213,8 @@ export function useChat(): UseChatReturn {
     setMessages([]);
     setIsTyping(false);
     setThinkingStage("general");
+    setChatId(null);
+    setIsLoadedChat(false);
   }, []);
 
   return {
@@ -186,5 +227,8 @@ export function useChat(): UseChatReturn {
     thinkingStage,
     reset,
     setPriceInputValue,
+    chatId,
+    loadChat,
+    isLoadedChat,
   };
 }

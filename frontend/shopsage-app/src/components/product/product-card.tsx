@@ -68,7 +68,6 @@ export function ProductCard({ product, onTrack }: ProductCardProps) {
             className="h-full w-full object-contain p-2"
           />
         ) : (
-          /* Headphones Icon (CSS Art) Placeholder */
           <div
             className="
               relative
@@ -157,4 +156,3 @@ export function ProductCard({ product, onTrack }: ProductCardProps) {
     </a>
   );
 }
-

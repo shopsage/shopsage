@@ -7,9 +7,10 @@ import { Package } from "lucide-react";
 interface TrackingListProps {
   items: TrackedItem[];
   onRemove?: (id: string) => void;
+  onSearch?: (title: string) => void;
 }
 
-export function TrackingList({ items, onRemove }: TrackingListProps) {
+export function TrackingList({ items, onRemove, onSearch }: TrackingListProps) {
   if (items.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-16 text-center">
@@ -45,7 +46,7 @@ export function TrackingList({ items, onRemove }: TrackingListProps) {
           className="animate-slide-up"
           style={{ animationDelay: `${index * 0.1}s` }}
         >
-          <TrackingCard item={item} onRemove={onRemove} />
+          <TrackingCard item={item} onRemove={onRemove} onSearch={onSearch} />
         </div>
       ))}
     </div>

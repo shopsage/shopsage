@@ -4,7 +4,7 @@ import { useEffect, useRef } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { MessageBubble } from "./message-bubble";
 import { ThinkingIndicator } from "./thinking-indicator";
-import type { DemoMessage, TrackedItem } from "@/lib/mock-data";
+import type { DemoMessage, TrackedItem, Product } from "@/lib/mock-data";
 
 interface ChatContainerProps {
   messages: DemoMessage[];
@@ -15,6 +15,9 @@ interface ChatContainerProps {
   onPriceConfirm?: (price: number) => void;
   onTrackProduct?: (product: TrackedItem) => void;
   onProductSearch?: (productName: string) => void;
+  onSaveProduct?: (query: string, products: Product[]) => void;
+  isProductSaved?: (name: string) => boolean;
+  isLoadedChat?: boolean;
 }
 
 export function ChatContainer({
@@ -26,6 +29,9 @@ export function ChatContainer({
   onPriceConfirm,
   onTrackProduct,
   onProductSearch,
+  onSaveProduct,
+  isProductSaved,
+  isLoadedChat = false,
 }: ChatContainerProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -93,7 +99,9 @@ export function ChatContainer({
             onPriceConfirm={onPriceConfirm}
             onTrackProduct={onTrackProduct}
             onProductSearch={onProductSearch}
-            enableTypewriter={index === messages.length - 1 && message.role === "assistant"}
+            onSaveProduct={onSaveProduct}
+            isProductSaved={isProductSaved}
+            enableTypewriter={!isLoadedChat && index === messages.length - 1 && message.role === "assistant"}
             onScrollToBottom={handleScrollToBottom}
           />
         ))}

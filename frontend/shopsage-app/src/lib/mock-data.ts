@@ -81,7 +81,7 @@ export interface SourceGroup {
 export type MessageContent =
   | { type: "text"; text: string }
   | { type: "preferences"; options: PreferenceGroup[] }
-  | { type: "products"; products: Product[]; followUpText?: string }
+  | { type: "products"; products: Product[]; followUpText?: string; extractedQuery?: string }
   | { type: "priceInput"; productId: string; currentPrice: number }
   | { type: "trackingConfirmation"; product: TrackedItem }
   | { type: "sources"; sourceGroups: SourceGroup[] }

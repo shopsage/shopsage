@@ -32,3 +32,8 @@ bs4==0.0.2
 
 # Optional: for better string matching
 python-Levenshtein==0.27.1
+
+# Auth & Database
+sqlmodel>=0.0.22
+python-jose[cryptography]>=3.3.0
+bcrypt>=4.0.0
