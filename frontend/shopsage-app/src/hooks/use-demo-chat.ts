@@ -90,7 +90,7 @@ export function useDemoChat(): UseDemoChatReturn {
         ]);
         setIsTyping(false);
         setCurrentStep((prev) => prev + 1);
-      }, 1500);
+      }, 750);
     } else {
       setCurrentStep((prev) => prev + 1);
     }
@@ -119,7 +119,7 @@ export function useDemoChat(): UseDemoChatReturn {
           ]);
           setIsTyping(false);
           setCurrentStep((prev) => prev + 1);
-        }, 1000);
+        }, 500);
       } else {
         setCurrentStep((prev) => prev + 1);
       }
@@ -170,7 +170,7 @@ export function useDemoChat(): UseDemoChatReturn {
           ]);
           setIsTyping(false);
           setCurrentStep((prev) => prev + 1);
-        }, 1200);
+        }, 600);
       } else {
         setCurrentStep((prev) => prev + 1);
       }
