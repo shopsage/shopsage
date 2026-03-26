@@ -59,55 +59,76 @@ def _try_heuristic_classify(message: str) -> Optional[Tuple[str, str]]:
 
 CLASSIFIER_SYSTEM_PROMPT = """You are a routing classifier for a shopping assistant. Your job is to analyze the user's LATEST message and determine which agent should handle it.
 
-There are three routes:
+There are four routes:
+
 1. **supplier** - Use when the user already knows the EXACT product they want (specific brand + model).
    Examples:
    - "Sony WH1000XM6"
    - "Apple AirPods Pro 2"
    - "I want to buy the Samsung Galaxy S24 Ultra"
-   - "I want to buy the Sony WH1000XM6"
    - "Find me deals on Logitech MX Master 3S"
-   - "Can I get the Apple MacBook Pro 14?"
-   - "Looking to purchase the LG C3 55 inch"
-   - "Where can I buy the Bose QuietComfort 45?"
-   - "How much is the Dyson V15 Detect?"
-   - "Sony WH1000XM6 please"
-   - "Get me the Nvidia RTX 4090"
 
-2. **product** - Use when the user is asking for recommendations, comparisons, or general research about a product category.
+2. **clarify** - Use when the user is asking about a product CATEGORY but hasn't given enough detail to research effectively. The query is vague — missing key constraints like type, budget, use-case, or form factor that would significantly change the recommendations.
    Examples:
-   - "What are the best noise cancelling headphones?"
+   - "I'm looking for good headphones" (missing: type, budget)
+   - "I need a laptop" (missing: use-case, budget)
+   - "What camera should I get?" (missing: type, budget, skill level)
+   DO NOT clarify when:
+   - The user already gave constraints: "best gaming mouse under $100" → route to product
+   - The user is comparing specific products: "compare Sony and Bose headphones" → route to product
+   - The conversation history already contains the user's preferences (check history!)
+
+3. **product** - Use when the user is asking for recommendations with enough detail to research, OR comparing specific products.
+   Examples:
+   - "What are the best noise cancelling headphones under $300?"
    - "Recommend me a gaming mouse under $100"
    - "I need a good laptop for video editing"
-   - "What wireless earbuds should I get?"
    - "Compare the Sony and Bose headphones"
    - "Best budget mechanical keyboards 2024"
+   - "In-ear noise cancelling headphones under $350" (has type + budget)
 
-3. **off_topic** - Use when the user's message has nothing to do with shopping, products, or buying decisions.
+4. **off_topic** - Use when the user's message has nothing to do with shopping, products, or buying decisions.
    Examples:
    - "Write me a poem"
    - "What is the capital of France?"
-   - "Can you help me with my homework?"
-   - "Tell me a joke"
    - "How do I cook pasta?"
-   - "What's the weather like?"
-   - "Help me debug my code"
-   - "Who is the president?"
 
-KEY RULE: If the user names a specific brand AND model (even inside a sentence like "I want to buy the X"), route to **supplier**.
-
-IMPORTANT: Focus on the LATEST message to determine intent. Previous messages provide context only.
+KEY RULES:
+- If the user names a specific brand AND model, route to **supplier**.
+- If the query is vague (just a category, no constraints), route to **clarify**.
+- If the query has constraints or the conversation history already has preferences, route to **product**.
+- Focus on the LATEST message to determine intent. Previous messages provide context.
 
 You MUST respond with valid JSON only, no other text:
+
+For supplier/product/off_topic routes:
 {
     "route": "supplier" or "product" or "off_topic",
     "extracted_query": "the cleaned query string"
 }
 
+For clarify route:
+{
+    "route": "clarify",
+    "extracted_query": "the product category",
+    "preferences": [
+        {"label": "Category Label", "options": ["Option 1", "Option 2", "Option 3"]},
+        {"label": "Budget", "options": ["Under $X", "Under $Y", "$Z+"]}
+    ]
+}
+
+Rules for the clarify route's preferences:
+- Generate 2-3 preference groups that are MOST relevant to narrowing down THIS specific product category.
+- Each group should have 2-5 concise options. Keep labels short (1-3 words).
+- Always include a Budget group with realistic price ranges for the category.
+- Make options mutually exclusive within each group.
+- Tailor groups to the category (e.g., headphones → Type/Budget; laptops → Use Case/Screen Size/Budget; cameras → Type/Skill Level/Budget).
+
 Rules for extracted_query:
-- If route is "supplier": Extract ONLY the clean brand + model name (e.g., "Sony WH1000XM6", "Apple AirPods Pro 2"). Strip all conversational fluff like "I want to buy", "find me", "can I get", "please", etc.
-- If route is "product": Combine ALL the conversation context into a single coherent query that captures what the user is looking for, including any preferences, budget constraints, and requirements mentioned across the conversation.
-- If route is "off_topic": Summarise what the user asked about in a short noun phrase (e.g., "writing poetry", "cooking recipes", "coding help", "geography questions")."""
+- If route is "supplier": Extract ONLY the clean brand + model name.
+- If route is "product": Combine ALL the conversation context into a single coherent query.
+- If route is "clarify": Extract the product category (e.g., "noise cancelling headphones", "laptop", "camera").
+- If route is "off_topic": Summarise what the user asked about in a short noun phrase."""
 
 
 def classify(state: Dict[str, Any]) -> Dict[str, Any]:
@@ -161,13 +182,35 @@ def classify(state: Dict[str, Any]) -> Dict[str, Any]:
         route = parsed.get("route", "product")
         extracted_query = parsed.get("extracted_query", latest_message)
 
-        if route not in ("supplier", "product", "off_topic"):
+        if route not in ("supplier", "product", "off_topic", "clarify"):
             route = "product"
 
-        return {
+        state_update = {
             "route": route,
             "extracted_query": extracted_query,
         }
+
+        # Parse preference groups for the clarify route
+        if route == "clarify":
+            raw_prefs = parsed.get("preferences", [])
+            preference_groups = []
+            for group in raw_prefs:
+                if isinstance(group, dict) and "label" in group and "options" in group:
+                    preference_groups.append({
+                        "label": group["label"],
+                        "options": [
+                            {"value": opt.lower().replace(" ", "-").replace("$", "").replace("+", "plus"),
+                             "label": opt}
+                            for opt in group["options"]
+                        ],
+                    })
+            if preference_groups:
+                state_update["preferences"] = preference_groups
+            else:
+                # Fallback: if no valid preferences, just do product research
+                state_update["route"] = "product"
+
+        return state_update
 
     except Exception as e:
         return {

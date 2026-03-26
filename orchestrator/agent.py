@@ -19,6 +19,11 @@ def off_topic(state: Dict[str, Any]) -> Dict[str, Any]:
     return {}
 
 
+def clarify(state: Dict[str, Any]) -> Dict[str, Any]:
+    """No-op node for clarification — preferences are already set by the classifier."""
+    return {}
+
+
 def create_orchestrator_graph():
     """
     Create the LangGraph orchestrator.
@@ -33,6 +38,7 @@ def create_orchestrator_graph():
     workflow.add_node("run_supplier", run_supplier)
     workflow.add_node("run_product", run_product)
     workflow.add_node("off_topic", off_topic)
+    workflow.add_node("clarify", clarify)
 
     # Set entry point
     workflow.set_entry_point("classify")
@@ -45,6 +51,7 @@ def create_orchestrator_graph():
             "supplier": "run_supplier",
             "product": "run_product",
             "off_topic": "off_topic",
+            "clarify": "clarify",
         },
     )
 
@@ -52,6 +59,7 @@ def create_orchestrator_graph():
     workflow.add_edge("run_supplier", END)
     workflow.add_edge("run_product", END)
     workflow.add_edge("off_topic", END)
+    workflow.add_edge("clarify", END)
 
     graph = workflow.compile()
     return graph

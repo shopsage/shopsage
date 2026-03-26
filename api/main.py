@@ -174,6 +174,10 @@ def _summarise_content_blocks(content: list) -> str:
             parts.append("[research sources shown]")
         elif btype == "productButton":
             parts.append(f"[product: {block.get('productName', '')}]")
+        elif btype == "preferences":
+            groups = block.get("options", [])
+            labels = [g.get("label", "") for g in groups if isinstance(g, dict)]
+            parts.append(f"[asked user preferences: {', '.join(labels)}]")
     return " ".join(parts)
 
 
@@ -530,7 +534,22 @@ async def chat(
         errors = state.get("errors", [])
 
         # Transform agent result into frontend content blocks
-        if route == "off_topic":
+        if route == "clarify":
+            preferences = state.get("preferences", [])
+            category = state.get("extracted_query", "that")
+            # Always append an "Other" group for free-text input
+            preferences_with_other = preferences + [{"label": "Other", "options": []}]
+            content = [
+                {
+                    "type": "text",
+                    "text": f"I can help with that! To find the best <strong>{category}</strong> for you:",
+                },
+                {
+                    "type": "preferences",
+                    "options": preferences_with_other,
+                },
+            ]
+        elif route == "off_topic":
             topic = state.get("extracted_query", "that")
             content = [{
                 "type": "text",

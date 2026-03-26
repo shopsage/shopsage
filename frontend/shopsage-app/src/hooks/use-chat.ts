@@ -37,6 +37,10 @@ function summariseContent(content: MessageContent[]): string {
       if (block.type === "products")
         return `[${block.products.length} product results shown]`;
       if (block.type === "sources") return "[research sources shown]";
+      if (block.type === "preferences") {
+        const labels = block.options.map((g) => g.label).join(", ");
+        return `[asked user preferences: ${labels}]`;
+      }
       return "";
     })
     .filter(Boolean)
@@ -179,6 +183,13 @@ export function useChat(): UseChatReturn {
             const updatedOptions: PreferenceGroup[] = content.options.map(
               (group) => {
                 if (group.label !== groupLabel) return group;
+                // "Other" group: store free-text as a single selected option
+                if (group.label.toLowerCase() === "other") {
+                  return {
+                    ...group,
+                    options: [{ value, label: value, selected: true }],
+                  };
+                }
                 return {
                   ...group,
                   options: group.options.map((opt) => ({
@@ -198,8 +209,28 @@ export function useChat(): UseChatReturn {
   );
 
   const confirmSelection = useCallback(() => {
-    // Could send a follow-up message with selected preferences in the future
-  }, []);
+    // Gather selected preferences from the last assistant message that has a preferences block
+    const lastPrefsMessage = [...messages].reverse().find(
+      (m) => m.role === "assistant" && m.content.some((c) => c.type === "preferences")
+    );
+    if (!lastPrefsMessage) return;
+
+    const selectedParts: string[] = [];
+    for (const block of lastPrefsMessage.content) {
+      if (block.type !== "preferences") continue;
+      for (const group of block.options) {
+        const selected = group.options.find((opt) => opt.selected);
+        if (selected) {
+          selectedParts.push(selected.label);
+        }
+      }
+    }
+
+    if (selectedParts.length === 0) return;
+
+    // Send the selected preferences as a natural-language message
+    sendMessage(selectedParts.join(", "));
+  }, [messages, sendMessage]);
 
   const confirmPriceInput = useCallback((_price: number) => {
     // Could wire up price tracking in the future

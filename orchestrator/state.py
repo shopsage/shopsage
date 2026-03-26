@@ -23,6 +23,9 @@ class RouterState(TypedDict):
     # Agent output
     result: Optional[Dict[str, Any]]  # Final result from whichever agent runs
 
+    # Clarification (when the query is too vague)
+    preferences: Optional[List[Dict[str, Any]]]  # PreferenceGroup[] for follow-up chips
+
     # Control
     errors: List[str]
 
@@ -38,5 +41,6 @@ def create_initial_state(
         route=None,
         extracted_query="",
         result=None,
+        preferences=None,
         errors=[],
     )
