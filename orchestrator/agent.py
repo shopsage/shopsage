@@ -14,12 +14,17 @@ def route_decision(state: Dict[str, Any]) -> str:
     return state.get("route", "product")
 
 
+def off_topic(state: Dict[str, Any]) -> Dict[str, Any]:
+    """No-op node for off-topic messages — skips all agents."""
+    return {}
+
+
 def create_orchestrator_graph():
     """
     Create the LangGraph orchestrator.
 
     Flow:
-    START → classify → (conditional) → run_supplier OR run_product → END
+    START → classify → (conditional) → run_supplier OR run_product OR off_topic → END
     """
     workflow = StateGraph(RouterState)
 
@@ -27,6 +32,7 @@ def create_orchestrator_graph():
     workflow.add_node("classify", classify)
     workflow.add_node("run_supplier", run_supplier)
     workflow.add_node("run_product", run_product)
+    workflow.add_node("off_topic", off_topic)
 
     # Set entry point
     workflow.set_entry_point("classify")
@@ -38,12 +44,14 @@ def create_orchestrator_graph():
         {
             "supplier": "run_supplier",
             "product": "run_product",
+            "off_topic": "off_topic",
         },
     )
 
-    # Both agent nodes lead to END
+    # All agent nodes lead to END
     workflow.add_edge("run_supplier", END)
     workflow.add_edge("run_product", END)
+    workflow.add_edge("off_topic", END)
 
     graph = workflow.compile()
     return graph

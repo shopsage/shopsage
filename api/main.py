@@ -530,7 +530,17 @@ async def chat(
         errors = state.get("errors", [])
 
         # Transform agent result into frontend content blocks
-        if agent_result:
+        if route == "off_topic":
+            topic = state.get("extracted_query", "that")
+            content = [{
+                "type": "text",
+                "text": (
+                    f"I'm ShopSage, an AI shopping assistant. "
+                    f"I'm not able to help with <strong>{topic}</strong>, "
+                    f"but I'd love to help you find products, compare prices, or research your next purchase!"
+                ),
+            }]
+        elif agent_result:
             if route == "supplier":
                 content = transform_supplier_result(agent_result)
             else:

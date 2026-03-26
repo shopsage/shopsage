@@ -59,7 +59,7 @@ def _try_heuristic_classify(message: str) -> Optional[Tuple[str, str]]:
 
 CLASSIFIER_SYSTEM_PROMPT = """You are a routing classifier for a shopping assistant. Your job is to analyze the user's LATEST message and determine which agent should handle it.
 
-There are two agents:
+There are three routes:
 1. **supplier** - Use when the user already knows the EXACT product they want (specific brand + model).
    Examples:
    - "Sony WH1000XM6"
@@ -83,19 +83,31 @@ There are two agents:
    - "Compare the Sony and Bose headphones"
    - "Best budget mechanical keyboards 2024"
 
+3. **off_topic** - Use when the user's message has nothing to do with shopping, products, or buying decisions.
+   Examples:
+   - "Write me a poem"
+   - "What is the capital of France?"
+   - "Can you help me with my homework?"
+   - "Tell me a joke"
+   - "How do I cook pasta?"
+   - "What's the weather like?"
+   - "Help me debug my code"
+   - "Who is the president?"
+
 KEY RULE: If the user names a specific brand AND model (even inside a sentence like "I want to buy the X"), route to **supplier**.
 
 IMPORTANT: Focus on the LATEST message to determine intent. Previous messages provide context only.
 
 You MUST respond with valid JSON only, no other text:
 {
-    "route": "supplier" or "product",
+    "route": "supplier" or "product" or "off_topic",
     "extracted_query": "the cleaned query string"
 }
 
 Rules for extracted_query:
 - If route is "supplier": Extract ONLY the clean brand + model name (e.g., "Sony WH1000XM6", "Apple AirPods Pro 2"). Strip all conversational fluff like "I want to buy", "find me", "can I get", "please", etc.
-- If route is "product": Combine ALL the conversation context into a single coherent query that captures what the user is looking for, including any preferences, budget constraints, and requirements mentioned across the conversation."""
+- If route is "product": Combine ALL the conversation context into a single coherent query that captures what the user is looking for, including any preferences, budget constraints, and requirements mentioned across the conversation.
+- If route is "off_topic": Summarise what the user asked about in a short noun phrase (e.g., "writing poetry", "cooking recipes", "coding help", "geography questions")."""
 
 
 def classify(state: Dict[str, Any]) -> Dict[str, Any]:
@@ -149,7 +161,7 @@ def classify(state: Dict[str, Any]) -> Dict[str, Any]:
         route = parsed.get("route", "product")
         extracted_query = parsed.get("extracted_query", latest_message)
 
-        if route not in ("supplier", "product"):
+        if route not in ("supplier", "product", "off_topic"):
             route = "product"
 
         return {
