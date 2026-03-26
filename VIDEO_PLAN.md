@@ -35,7 +35,7 @@ Something you actually care about.
 
 ### **[0:10 – 0:22] HOOK — The Problem, Act II**
 
-**Visual:** Still on black. New lines appear.
+**Visual:** Still on black. New lines appear. / Flash a bunch of logos and screenshots
 
 ```
 So you open Google.
@@ -120,17 +120,17 @@ Slight pause. Let the source cards sit on screen.
 Assistant responds. A price input component appears — a clean number input, pre-filled.
 
 **VO:**
-> *"Found something you want — but the price isn't quite right?"*
+> *"Found something you want — but not in a rush to buy it?"*
 
 **Visual:** Value changes to $300. User hits Confirm.
 
 **VO:**
-> *"Set a target price. ShopSage watches it for you."*
+> *"You can save it, and come back to it any time."*
 
 **Visual:** Cut to the Tracking page. Sony WH-1000XM5 in the tracked list. Target price $300 visible. Price history graph below — showing the drop from $379 to $319 over time.
 
 **VO:**
-> *"When it drops to where you want it, you'll know."*
+> *"We will even track it for you, so you know how its price is changing since you last saw it."*
 
 ---
 
@@ -144,7 +144,7 @@ A shopping assistant.
 ```
 
 **VO (slower, quieter):**
-> *"ShopSage doesn't make you shop differently. It just does the hard parts for you."*
+> *"ShopSage doesn't change the way you shop. It just does the hard parts for you."*
 
 Music softens back down.
 
