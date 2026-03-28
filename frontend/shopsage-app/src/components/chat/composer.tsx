@@ -2,6 +2,7 @@
 
 import { Plus, ArrowUp } from "lucide-react";
 import { KeyboardEvent, useRef, useEffect } from "react";
+import { useKeyboardHeight } from "@/hooks/use-keyboard-height";
 
 interface ComposerProps {
   value: string;
@@ -17,6 +18,8 @@ export function Composer({
   placeholder = "Ask follow-up...",
 }: ComposerProps) {
   const inputRef = useRef<HTMLInputElement>(null);
+  const keyboardHeight = useKeyboardHeight();
+  const isKeyboardOpen = keyboardHeight > 0;
 
   useEffect(() => {
     if (inputRef.current) {
@@ -32,7 +35,14 @@ export function Composer({
   };
 
   return (
-    <div className="absolute left-0 right-0 z-40 px-4" style={{ bottom: "calc(64px + max(env(safe-area-inset-bottom, 0px), 8px))" }}>
+    <div
+      className={`${isKeyboardOpen ? "fixed" : "absolute"} left-0 right-0 z-40 px-4 transition-[bottom] duration-150`}
+      style={{
+        bottom: isKeyboardOpen
+          ? `${keyboardHeight}px`
+          : "calc(64px + max(env(safe-area-inset-bottom, 0px), 8px))",
+      }}
+    >
       <div
         className="
           flex
