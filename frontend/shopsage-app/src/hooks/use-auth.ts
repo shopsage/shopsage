@@ -28,6 +28,10 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
+const SKIP_AUTH = process.env.NEXT_PUBLIC_SKIP_AUTH === "true";
+const TEST_EMAIL = "tester@shopsage.co";
+const TEST_PASSWORD = "testing123";
+
 function setTokenEverywhere(token: string | null) {
   if (typeof window === "undefined") return;
   if (token) {
@@ -49,6 +53,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const stored = localStorage.getItem("shopsage-token");
     if (!stored) {
+      if (SKIP_AUTH) {
+        apiFetch("/api/auth/signup", {
+          method: "POST",
+          body: JSON.stringify({ email: TEST_EMAIL, password: TEST_PASSWORD, display_name: "Tester" }),
+        })
+          .then((res) =>
+            res.status === 409
+              ? apiFetch("/api/auth/login", {
+                  method: "POST",
+                  body: JSON.stringify({ email: TEST_EMAIL, password: TEST_PASSWORD }),
+                })
+              : res
+          )
+          .then((res) => res.json())
+          .then((data) => {
+            setTokenEverywhere(data.token);
+            setToken(data.token);
+            setUser(data.user);
+          })
+          .catch(() => {})
+          .finally(() => setIsLoading(false));
+        return;
+      }
       setIsLoading(false);
       return;
     }
@@ -110,7 +137,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setTokenEverywhere(null);
     setToken(null);
     setUser(null);
-    if (typeof window !== "undefined") {
+    if (typeof window !== "undefined" && !SKIP_AUTH) {
       window.location.href = "/login";
     }
   }, []);
