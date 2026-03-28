@@ -11,7 +11,7 @@ import { useTracking } from "@/hooks/use-tracking";
 import type { TrackedItem, Product } from "@/lib/mock-data";
 
 export default function SearchPage() {
-  const [activeChatId, setActiveChatId] = useState<string | null>(null);
+  const [activeChatId, setActiveChatId] = useState<string | null>("new");
 
   const {
     messages,
