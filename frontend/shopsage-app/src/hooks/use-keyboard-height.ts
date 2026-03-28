@@ -1,25 +1,37 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 
 /**
- * Returns the current on-screen keyboard height in pixels.
- * Uses the Visual Viewport API — works reliably on iOS Safari/Chrome and Android.
- * Returns 0 when no keyboard is visible or during SSR.
+ * Returns the bottom position (in px) the composer should use.
+ * When keyboard is closed: returns null (use CSS default).
+ * When keyboard is open: returns the distance from the bottom of the
+ * layout viewport to the top of the keyboard.
+ *
+ * On iOS, `position: fixed` elements are positioned relative to the
+ * layout viewport (which does NOT shrink when the keyboard opens).
+ * The visual viewport DOES shrink, so we compute:
+ *   bottom = layoutHeight - (vv.offsetTop + vv.height)
+ * This gives us exactly where the keyboard starts.
  */
-export function useKeyboardHeight(): number {
-  const [keyboardHeight, setKeyboardHeight] = useState(0);
+export function useKeyboardOffset(): number | null {
+  const [offset, setOffset] = useState<number | null>(null);
+
+  const update = useCallback(() => {
+    const vv = window.visualViewport;
+    if (!vv) return;
+
+    const layoutHeight = window.innerHeight;
+    const visualBottom = vv.offsetTop + vv.height;
+    const keyboardHeight = layoutHeight - visualBottom;
+
+    // Only treat as keyboard if > 100px to avoid false positives
+    setOffset(keyboardHeight > 100 ? keyboardHeight : null);
+  }, []);
 
   useEffect(() => {
     const vv = window.visualViewport;
     if (!vv) return;
-
-    const update = () => {
-      const diff = window.innerHeight - vv.height;
-      // Only treat as keyboard if the difference is significant (> 100px)
-      // to avoid false positives from browser chrome changes
-      setKeyboardHeight(diff > 100 ? diff : 0);
-    };
 
     vv.addEventListener("resize", update);
     vv.addEventListener("scroll", update);
@@ -28,7 +40,7 @@ export function useKeyboardHeight(): number {
       vv.removeEventListener("resize", update);
       vv.removeEventListener("scroll", update);
     };
-  }, []);
+  }, [update]);
 
-  return keyboardHeight;
+  return offset;
 }
