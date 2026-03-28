@@ -74,7 +74,6 @@ export default function SearchPage() {
   };
 
   const handleSuggestionClick = (text: string) => {
-    setInput(text);
     sendMessage(text);
   };
 
@@ -138,7 +137,7 @@ export default function SearchPage() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 20 }}
             transition={{ duration: 0.3 }}
-            className="absolute bottom-[160px] left-0 right-0 z-30"
+            className="absolute bottom-[130px] left-0 right-0 z-30"
           >
             <SuggestionCards onSuggestionClick={handleSuggestionClick} />
           </motion.div>

@@ -28,7 +28,7 @@ export default function SettingsPage() {
   };
 
   return (
-    <main className="hide-scrollbar flex-1 overflow-y-auto px-4 pb-[90px] pt-[80px]">
+    <main className="hide-scrollbar flex-1 overflow-y-auto px-4 pb-[70px] pt-[80px]">
       <div className="mb-6">
         <h1 className="text-xl font-semibold text-neutral-800">Settings</h1>
         <p className="mt-1 text-sm font-light text-neutral-500">

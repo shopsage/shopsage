@@ -7,7 +7,7 @@ interface PhoneMockupWrapperProps {
 }
 
 export function PhoneMockupWrapper({ children }: PhoneMockupWrapperProps) {
-  const [isMobile, setIsMobile] = useState(false);
+  const [isMobile, setIsMobile] = useState(true);
 
   useEffect(() => {
     const checkMobile = () => {

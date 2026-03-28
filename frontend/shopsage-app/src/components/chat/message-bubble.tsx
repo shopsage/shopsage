@@ -316,17 +316,17 @@ function MessageContentRenderer({
           className="
             inline-flex items-center gap-2
             rounded-full
-            border border-primary-200 bg-primary-50
+            border border-neutral-300 bg-white shadow-sm
             px-4 py-1.5
-            text-[13px] font-medium text-primary-700
-            hover:bg-primary-100 hover:border-primary-300
+            text-[13px] font-medium text-neutral-700
+            hover:bg-neutral-50 hover:shadow-md hover:border-neutral-400
             transition-all duration-150
             active:scale-95
             cursor-pointer
           "
         >
           {content.productName}
-          <ArrowRight className="h-3.5 w-3.5" />
+          <ArrowRight className="h-3.5 w-3.5 text-primary-500" />
         </button>
       );
 

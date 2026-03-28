@@ -14,7 +14,7 @@ export default function TrackingPage() {
   };
 
   return (
-    <main className="hide-scrollbar flex-1 overflow-y-auto px-4 pb-[124px] pt-[120px]">
+    <main className="hide-scrollbar flex-1 overflow-y-auto px-4 pb-[100px] pt-[120px]">
       <div className="mx-auto w-full max-w-md">
         <TrackingList items={trackedItems} onRemove={removeItem} onSearch={handleSearch} />
       </div>

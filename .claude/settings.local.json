@@ -11,7 +11,11 @@
       "Bash(xargs grep:*)",
       "Bash(npx next:*)",
       "Bash(pip install:*)",
-      "Bash(npm install:*)"
+      "Bash(npm install:*)",
+      "mcp__Claude_Preview__preview_start",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:8000/docs)",
+      "Bash(source /Users/justinwong/Desktop/School/Capstone/shopsage/venv/bin/activate)",
+      "Bash(source venv/bin/activate)"
     ],
     "deny": [],
     "ask": []
