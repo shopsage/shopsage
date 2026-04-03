@@ -33,7 +33,16 @@ export function ProductCarousel({ products, onTrack }: ProductCarouselProps) {
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: index * 0.15, duration: 0.5, ease: "easeOut" }}
           style={{ scrollSnapAlign: "center" }}
+          className="flex flex-col"
         >
+          {product.badge === "Cheapest" ? (
+            <div className="mb-1.5 flex items-center gap-1.5 self-start rounded-full bg-emerald-500 px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-white shadow-sm">
+              <span>Cheapest</span>
+            </div>
+          ) : (
+            /* Reserve the same height so all cards align */
+            <div className="mb-1.5 h-[26px]" />
+          )}
           <ProductCard product={product} onTrack={onTrack} />
         </motion.div>
       ))}

@@ -86,7 +86,8 @@ export type MessageContent =
   | { type: "trackingConfirmation"; product: TrackedItem }
   | { type: "sources"; sourceGroups: SourceGroup[] }
   | { type: "sourcePreview"; sources: SourceItem[]; productName?: string }
-  | { type: "productButton"; productName: string };
+  | { type: "productButton"; productName: string }
+  | { type: "supplierButton"; productName: string };
 
 export interface PreferenceGroup {
   label: string;

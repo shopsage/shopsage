@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, Bookmark, BookmarkCheck } from "lucide-react";
+import { ArrowRight, Bookmark, BookmarkCheck, Store } from "lucide-react";
 import { ProductCarousel } from "@/components/product/product-carousel";
 import { SourceList } from "@/components/chat/source-list";
 import { SourcePreviewCards } from "@/components/chat/source-preview-cards";
@@ -327,6 +327,27 @@ function MessageContentRenderer({
         >
           {content.productName}
           <ArrowRight className="h-3.5 w-3.5 text-primary-500" />
+        </button>
+      );
+
+    case "supplierButton":
+      return (
+        <button
+          onClick={() => onProductSearch?.(`Find suppliers for ${content.productName}`)}
+          className="
+            inline-flex items-center gap-2
+            rounded-full
+            border border-blue-200 bg-blue-50
+            px-4 py-1.5
+            text-[13px] font-medium text-blue-700
+            hover:bg-blue-100 hover:border-blue-300
+            transition-all duration-150
+            active:scale-95
+            cursor-pointer
+          "
+        >
+          <Store className="h-3.5 w-3.5" />
+          {content.productName}
         </button>
       );
 

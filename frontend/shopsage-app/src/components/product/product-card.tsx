@@ -34,8 +34,8 @@ export function ProductCard({ product, onTrack }: ProductCardProps) {
     >
       {/* Image Area */}
       <div className="relative mb-3 flex h-[140px] items-center justify-center overflow-hidden rounded-xl bg-white shadow-sm border border-neutral-100">
-        {/* Badge */}
-        {product.badge && (
+        {/* Badge — skip "Cheapest" since it's shown above the card by the carousel */}
+        {product.badge && product.badge !== "Cheapest" && (
           <div
             className="
               glass

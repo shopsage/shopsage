@@ -174,6 +174,8 @@ def _summarise_content_blocks(content: list) -> str:
             parts.append("[research sources shown]")
         elif btype == "productButton":
             parts.append(f"[product: {block.get('productName', '')}]")
+        elif btype == "supplierButton":
+            parts.append(f"[find suppliers for: {block.get('productName', '')}]")
         elif btype == "preferences":
             groups = block.get("options", [])
             labels = [g.get("label", "") for g in groups if isinstance(g, dict)]
@@ -209,9 +211,19 @@ def transform_supplier_result(agent_result: dict) -> list:
 
     content_blocks.append({"type": "text", "text": intro})
 
+    # Sort recommendations by price ascending so cheapest appears first
+    def _sort_price(rec):
+        price = rec.get("extracted_price") or rec.get("price")
+        try:
+            return float(price)
+        except (TypeError, ValueError):
+            return float("inf")
+
+    recommendations_sorted = sorted(recommendations, key=_sort_price)
+
     # Map recommendations → frontend Product objects
     products = []
-    for i, rec in enumerate(recommendations):
+    for i, rec in enumerate(recommendations_sorted):
         price = rec.get("extracted_price") or rec.get("price")
         product = {
             "id": _slugify(rec.get("title", f"product-{i}")),
@@ -223,9 +235,9 @@ def transform_supplier_result(agent_result: dict) -> list:
             "image": rec.get("thumbnail"),
             "url": rec.get("product_link") or rec.get("link"),
         }
-        # Badge for the top-scored item
+        # Badge for the cheapest item
         if i == 0:
-            product["badge"] = "Best Deal"
+            product["badge"] = "Cheapest"
         products.append(product)
 
     if products:
@@ -403,6 +415,25 @@ def transform_product_result(agent_result: dict) -> list:
         source_groups.append({"label": "Google", "sources": google_list})
     if source_groups:
         content_blocks.append({"type": "sources", "sourceGroups": source_groups})
+
+    # Block 5: CTA — nudge toward supplier research + quick-access buttons
+    mentioned_products = []
+    if top_pick_name:
+        mentioned_products.append(top_pick_name)
+    for m in mentions:
+        if isinstance(m, dict) and m.get("name"):
+            mentioned_products.append(m["name"])
+
+    if mentioned_products:
+        example = mentioned_products[0]
+        cta_text = (
+            f"Found something you like? I can now search for the <strong>best supplier prices</strong> "
+            f"across verified sellers for any of these — just tap a product below, or ask me something like "
+            f"<em>\"Find suppliers for the {example}\"</em>. Still have questions? Ask away!"
+        )
+        content_blocks.append({"type": "text", "text": cta_text})
+        for name in mentioned_products:
+            content_blocks.append({"type": "supplierButton", "productName": name})
 
     print(content_blocks)
 
