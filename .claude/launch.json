@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "ui-variants",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["serve", "/Users/justinwong/Desktop/School/Capstone/shopsage/frontend/ui-variants", "-l", "3456", "--no-clipboard"],
+      "port": 3456
+    },
+    {
+      "name": "shopsage-app",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev", "--prefix", "/Users/justinwong/Desktop/School/Capstone/shopsage/frontend/shopsage-app"],
+      "port": 3000
+    }
+  ]
+}

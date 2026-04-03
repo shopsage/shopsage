@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 
 const PUBLIC_PATHS = ["/login", "/signup"];
+const SKIP_AUTH = process.env.NEXT_PUBLIC_SKIP_AUTH === "true";
 
 export function middleware(request: NextRequest) {
+  if (SKIP_AUTH) return NextResponse.next();
+
   const { pathname } = request.nextUrl;
 
   // Allow public paths

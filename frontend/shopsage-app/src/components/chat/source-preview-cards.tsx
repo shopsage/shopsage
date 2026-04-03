@@ -95,7 +95,7 @@ export function SourcePreviewCards({ sources, productName }: SourcePreviewCardsP
 
               {/* Optional product name chip */}
               {productName && (
-                <span className="inline-block w-fit max-w-full truncate rounded-full bg-primary-50 px-2.5 py-0.5 text-[11px] font-semibold text-primary-700 leading-tight">
+                <span className="inline-block w-fit max-w-full truncate rounded-full bg-neutral-100 px-2.5 py-0.5 text-[11px] font-semibold text-neutral-600 leading-tight">
                   {productName}
                 </span>
               )}

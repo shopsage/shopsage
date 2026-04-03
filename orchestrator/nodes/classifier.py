@@ -15,13 +15,14 @@ _STOP_WORDS = {
     "just", "now", "here", "there", "is", "are", "have", "has",
 }
 
-# Matches product model numbers:
+# Matches product model numbers containing digits:
 #   - letters + 2+ digits + optional tail: WH1000XM6, V15, S24, QC45, GTX4090, XPS15
-#   - hyphenated models: MX-Keys, SM-G998, WH-1000XM6
+#   - hyphenated models with digits: SM-G998, WH-1000XM6, MX-500
+# NOTE: intentionally excludes purely alphabetic hyphenated words (in-ear, over-ear, noise-cancelling)
 _MODEL_NUMBER_RE = re.compile(
     r'\b[A-Za-z]{1,8}-?[0-9]{2,}[A-Za-z0-9]*\b'
     r'|'
-    r'\b[A-Za-z]{2,8}-[A-Za-z0-9]{2,10}\b',
+    r'\b[A-Za-z]{1,8}-[A-Za-z0-9]*[0-9][A-Za-z0-9]*\b',
 )
 
 
@@ -94,10 +95,17 @@ There are four routes:
    - "How do I cook pasta?"
 
 KEY RULES:
-- If the user names a specific brand AND model, route to **supplier**.
+- If the user names a specific brand AND model number (e.g. "Sony WH1000XM6"), route to **supplier**.
+- **supplier** requires BOTH a brand name AND a model identifier — a category name alone (even a specific one like "in-ear headphones") is NOT enough for supplier.
 - If the query is vague (just a category, no constraints), route to **clarify**.
 - If the query has constraints or the conversation history already has preferences, route to **product**.
 - Focus on the LATEST message to determine intent. Previous messages provide context.
+
+POST-CLARIFICATION RULE (highest priority):
+- If the conversation history contains an assistant message with "[asked user preferences: ...]", the user's latest message is answering those preference questions.
+- In that case, ALWAYS route to **product** — never supplier, never clarify again.
+- For extracted_query: combine the original product category from history with the user's preference answers into one coherent search query.
+  Example: history has "headphones" + "[asked user preferences: Type, Budget]", latest message "In-ear, Under $300" → route "product", extracted_query "in-ear headphones under $300"
 
 You MUST respond with valid JSON only, no other text:
 
@@ -125,8 +133,8 @@ Rules for the clarify route's preferences:
 - Tailor groups to the category (e.g., headphones → Type/Budget; laptops → Use Case/Screen Size/Budget; cameras → Type/Skill Level/Budget).
 
 Rules for extracted_query:
-- If route is "supplier": Extract ONLY the clean brand + model name.
-- If route is "product": Combine ALL the conversation context into a single coherent query.
+- If route is "supplier": Extract ONLY the clean brand + model name (must include a model number/identifier).
+- If route is "product": Combine ALL relevant conversation context into a single coherent query.
 - If route is "clarify": Extract the product category (e.g., "noise cancelling headphones", "laptop", "camera").
 - If route is "off_topic": Summarise what the user asked about in a short noun phrase."""
 

@@ -75,7 +75,7 @@ export function ChatContainer({
         overflow-y-auto
         scroll-smooth
         px-4
-        pb-[190px]
+        pb-[160px]
         pt-[120px]
         relative
       "

@@ -17,7 +17,11 @@
       "Bash(pandoc \"D:/coding-projects/shopsage/VIDEO_PLAN.md\" -o \"D:/coding-projects/shopsage/VIDEO_PLAN.docx\")",
       "Bash(where pandoc:*)",
       "Bash(cmd.exe /c \"where pandoc 2>nul\")",
-      "Bash(cmd.exe /c \"pandoc --version 2>&1 | findstr pandoc\")"
+      "Bash(cmd.exe /c \"pandoc --version 2>&1 | findstr pandoc\")",
+      "mcp__Claude_Preview__preview_start",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:8000/docs)",
+      "Bash(source /Users/justinwong/Desktop/School/Capstone/shopsage/venv/bin/activate)",
+      "Bash(source venv/bin/activate)"
     ],
     "deny": [],
     "ask": []

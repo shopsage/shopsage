@@ -61,7 +61,7 @@ export function ChatListView({ onOpenChat, onNewChat }: ChatListViewProps) {
   };
 
   return (
-    <main className="hide-scrollbar flex-1 overflow-y-auto px-4 pb-[90px] pt-[120px]">
+    <main className="hide-scrollbar flex-1 overflow-y-auto px-4 pb-[70px] pt-[120px]">
       <div className="mb-4 flex items-center justify-between">
         <div>
           <h1 className="text-xl font-semibold text-neutral-800">Chats</h1>

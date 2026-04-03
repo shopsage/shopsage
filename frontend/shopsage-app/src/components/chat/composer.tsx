@@ -32,7 +32,12 @@ export function Composer({
   };
 
   return (
-    <div className="absolute bottom-[93px] left-0 right-0 z-40 px-4">
+    <div
+      className="absolute left-0 right-0 z-40 px-4"
+      style={{
+        bottom: "calc(64px + max(env(safe-area-inset-bottom, 0px), 8px))",
+      }}
+    >
       <div
         className="
           flex
@@ -128,4 +133,3 @@ export function Composer({
     </div>
   );
 }
-

@@ -36,8 +36,8 @@ export function BottomNav() {
         border-neutral-200/30
       "
       style={{
-        paddingBottom: "max(env(safe-area-inset-bottom, 0px), 16px)",
-        paddingTop: "12px",
+        paddingBottom: "max(env(safe-area-inset-bottom, 0px), 8px)",
+        paddingTop: "8px",
       }}
     >
       {navItems.map((item) => {
@@ -49,7 +49,7 @@ export function BottomNav() {
             key={item.href}
             href={item.href}
             className={cn(
-              "flex flex-col items-center gap-1 rounded-xl px-4 py-2 transition-all duration-300",
+              "flex flex-col items-center gap-1 rounded-xl px-4 py-1 transition-all duration-300",
               isActive
                 ? "text-primary-500"
                 : "text-neutral-500 hover:text-neutral-700"
