@@ -88,7 +88,23 @@ There are four routes:
    - "Best budget mechanical keyboards 2024"
    - "In-ear noise cancelling headphones under $350" (has type + budget)
 
-4. **off_topic** - Use when the user's message has nothing to do with shopping, products, or buying decisions.
+4. **chat** - Use when the user is asking a follow-up question about products ALREADY discussed in the conversation. The conversation history MUST contain prior assistant messages with product information or recommendations.
+   Requirements:
+   - There MUST be prior assistant messages with product information in the conversation history.
+   - The user's question relates to products/information already discussed.
+   - NEVER use chat on the first message (no conversation history with product results).
+   Examples:
+   - "How's the battery life on the Sony one?" (after products were shown)
+   - "Which of those is best for running?" (after recommendations)
+   - "Tell me more about the top pick" (after product research results)
+   - "How does the first one compare to the second?" (after multiple products shown)
+   - "Is it worth the extra $50 for the Pro model?" (after price comparison)
+   Do NOT use chat when:
+   - The user asks about a completely NEW product category → product or clarify
+   - The user names a specific brand + model number → supplier
+   - There is no conversation history with product results → product or clarify
+
+5. **off_topic** - Use when the user's message has nothing to do with shopping, products, or buying decisions.
    Examples:
    - "Write me a poem"
    - "What is the capital of France?"
@@ -111,7 +127,7 @@ You MUST respond with valid JSON only, no other text:
 
 For supplier/product/off_topic routes:
 {
-    "route": "supplier" or "product" or "off_topic",
+    "route": "supplier" or "product" or "off_topic" or "chat",
     "extracted_query": "the cleaned query string"
 }
 
@@ -190,7 +206,7 @@ def classify(state: Dict[str, Any]) -> Dict[str, Any]:
         route = parsed.get("route", "product")
         extracted_query = parsed.get("extracted_query", latest_message)
 
-        if route not in ("supplier", "product", "off_topic", "clarify"):
+        if route not in ("supplier", "product", "off_topic", "clarify", "chat"):
             route = "product"
 
         state_update = {

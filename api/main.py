@@ -590,6 +590,14 @@ async def chat(
                     f"but I'd love to help you find products, compare prices, or research your next purchase!"
                 ),
             }]
+        elif route == "chat":
+            chat_text = ""
+            if agent_result and isinstance(agent_result, dict):
+                chat_text = agent_result.get("chat_response", "")
+            if chat_text:
+                content = [{"type": "text", "text": chat_text}]
+            else:
+                content = [{"type": "text", "text": "I wasn't able to generate a response. Could you try rephrasing?"}]
         elif agent_result:
             if route == "supplier":
                 content = transform_supplier_result(agent_result)

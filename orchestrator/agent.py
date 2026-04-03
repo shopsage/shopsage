@@ -7,6 +7,7 @@ from orchestrator.state import RouterState, create_initial_state
 from orchestrator.nodes.classifier import classify
 from orchestrator.nodes.run_supplier import run_supplier
 from orchestrator.nodes.run_product import run_product
+from orchestrator.nodes.run_chat import run_chat
 
 
 def route_decision(state: Dict[str, Any]) -> str:
@@ -39,6 +40,7 @@ def create_orchestrator_graph():
     workflow.add_node("run_product", run_product)
     workflow.add_node("off_topic", off_topic)
     workflow.add_node("clarify", clarify)
+    workflow.add_node("chat", run_chat)
 
     # Set entry point
     workflow.set_entry_point("classify")
@@ -52,6 +54,7 @@ def create_orchestrator_graph():
             "product": "run_product",
             "off_topic": "off_topic",
             "clarify": "clarify",
+            "chat": "chat",
         },
     )
 
@@ -60,6 +63,7 @@ def create_orchestrator_graph():
     workflow.add_edge("run_product", END)
     workflow.add_edge("off_topic", END)
     workflow.add_edge("clarify", END)
+    workflow.add_edge("chat", END)
 
     graph = workflow.compile()
     return graph
