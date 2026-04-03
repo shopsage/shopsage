@@ -3,7 +3,7 @@
 import { useState, useCallback } from "react";
 import { demoScript, DemoMessage, PreferenceGroup } from "@/lib/mock-data";
 
-type ThinkingStage = "researching" | "analyzing" | "finding-prices" | "comparing" | "general";
+type ThinkingStage = "researching" | "supplier-research" | "analyzing" | "finding-prices" | "comparing" | "general";
 
 interface UseDemoChatReturn {
   messages: DemoMessage[];
@@ -55,7 +55,7 @@ export function useDemoChat(): UseDemoChatReturn {
               ...group,
               options: group.options.map((opt) => ({
                 ...opt,
-                selected: opt.value === value,
+                selected: opt.value === value ? !opt.selected : opt.selected,
               })),
             };
           });

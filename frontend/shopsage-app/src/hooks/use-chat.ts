@@ -6,6 +6,7 @@ import { apiFetch } from "@/lib/api";
 
 type ThinkingStage =
   | "researching"
+  | "supplier-research"
   | "analyzing"
   | "finding-prices"
   | "comparing"
@@ -49,11 +50,30 @@ function summariseContent(content: MessageContent[]): string {
 
 function determineThinkingStage(text: string): ThinkingStage {
   const lower = text.toLowerCase();
+  if (
+    lower.includes("supplier") ||
+    lower.includes("wholesale") ||
+    lower.includes("manufacturer") ||
+    lower.includes("bulk") ||
+    lower.includes("sourcing") ||
+    lower.includes("factory")
+  )
+    return "supplier-research";
   if (lower.includes("price") || lower.includes("cost") || lower.includes("cheap"))
     return "finding-prices";
   if (lower.includes("compare") || lower.includes("better") || lower.includes("which"))
     return "comparing";
   if (lower.includes("track")) return "analyzing";
+  // Default product research for shopping queries
+  if (
+    lower.includes("find") ||
+    lower.includes("looking for") ||
+    lower.includes("recommend") ||
+    lower.includes("best") ||
+    lower.includes("buy") ||
+    lower.includes("shop")
+  )
+    return "researching";
   return "general";
 }
 
@@ -194,7 +214,7 @@ export function useChat(): UseChatReturn {
                   ...group,
                   options: group.options.map((opt) => ({
                     ...opt,
-                    selected: opt.value === value,
+                    selected: opt.value === value ? !opt.selected : opt.selected,
                   })),
                 };
               }
@@ -219,9 +239,9 @@ export function useChat(): UseChatReturn {
     for (const block of lastPrefsMessage.content) {
       if (block.type !== "preferences") continue;
       for (const group of block.options) {
-        const selected = group.options.find((opt) => opt.selected);
-        if (selected) {
-          selectedParts.push(selected.label);
+        const selected = group.options.filter((opt) => opt.selected);
+        if (selected.length > 0) {
+          selectedParts.push(selected.map((opt) => opt.label).join(", "));
         }
       }
     }

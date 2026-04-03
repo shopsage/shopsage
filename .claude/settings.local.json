@@ -11,7 +11,13 @@
       "Bash(xargs grep:*)",
       "Bash(npx next:*)",
       "Bash(pip install:*)",
-      "Bash(npm install:*)"
+      "Bash(npm install:*)",
+      "Bash(pandoc --version)",
+      "Bash(pandoc \"D:/coding-projects/shopsage/VIDEO_PLAN.md\" -o \"D:/coding-projects/shopsage/VIDEO_PLAN.docx\" --reference-doc=default)",
+      "Bash(pandoc \"D:/coding-projects/shopsage/VIDEO_PLAN.md\" -o \"D:/coding-projects/shopsage/VIDEO_PLAN.docx\")",
+      "Bash(where pandoc:*)",
+      "Bash(cmd.exe /c \"where pandoc 2>nul\")",
+      "Bash(cmd.exe /c \"pandoc --version 2>&1 | findstr pandoc\")"
     ],
     "deny": [],
     "ask": []

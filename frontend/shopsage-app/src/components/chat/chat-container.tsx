@@ -9,7 +9,7 @@ import type { DemoMessage, TrackedItem, Product } from "@/lib/mock-data";
 interface ChatContainerProps {
   messages: DemoMessage[];
   isTyping?: boolean;
-  thinkingStage?: "researching" | "analyzing" | "finding-prices" | "comparing" | "general";
+  thinkingStage?: "researching" | "supplier-research" | "analyzing" | "finding-prices" | "comparing" | "general";
   onPreferenceChange?: (groupLabel: string, value: string) => void;
   onConfirmSelection?: () => void;
   onPriceConfirm?: (price: number) => void;
