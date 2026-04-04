@@ -7,44 +7,57 @@ from typing import List, Dict, Any, Optional
 class ProductScorer:
     """Scores and ranks products based on multiple criteria"""
 
-    # Known trusted retailers (add more as needed)
+    # Known trusted retailers in Singapore
     TRUSTED_STORES = {
         "shopee.com",
         "shopee",
         "lazada.com",
-        "Lazada Singapore",
+        "lazada singapore",
         "challenger",
         "gaincity",
         "courts",
-        "Harvey Norman Singapore",
+        "harvey norman singapore",
+        "harvey norman",
         "bestdenki",
         "amazon.com",
         "amazon",
-        "Amazon.sg - Seller",
+        "amazon.sg",
         "qoo10",
         "qoo10.sg",
-        "walmart.com",
-        "walmart",
-        "target.com",
-        "target",
-        "bestbuy.com",
-        "best buy",
-        "newegg.com",
-        "newegg",
-        "NTUC FairPrice",
-        "Cold Storage",
-        "Giant",
+        "ezbuy",
+        "carousell",
+        "ntuc fairprice",
+        "fairprice",
+        "cold storage",
+        "giant",
+        "ishopisg",
+        "istore",
     }
 
     PREMIUM_STORES = {
-        "amazon.com",
+        "amazon.sg",
         "amazon",
-        "bestbuy.com",
-        "best buy",
         "gaincity",
         "courts",
-        "Harvey Norman Singapore",
+        "harvey norman singapore",
+        "harvey norman",
         "bestdenki",
+        "challenger",
+    }
+
+    # Stores that are not prominent in Singapore — deprioritize in results
+    DEPRIORITIZED_STORES = {
+        "ebay",
+        "ebay.com",
+        "walmart",
+        "walmart.com",
+        "target",
+        "target.com",
+        "bestbuy",
+        "bestbuy.com",
+        "best buy",
+        "newegg",
+        "newegg.com",
     }
 
     def __init__(
@@ -119,7 +132,7 @@ class ProductScorer:
 
     def score_reputation(self, source: str) -> float:
         """
-        Score store reputation
+        Score store reputation, optimized for Singapore market.
 
         Args:
             source: Store/source name
@@ -128,6 +141,11 @@ class ProductScorer:
             Score from 0-10
         """
         source_lower = source.lower().strip()
+
+        # Deprioritize stores not prominent in Singapore (e.g. eBay, US-only retailers)
+        for store in self.DEPRIORITIZED_STORES:
+            if store in source_lower:
+                return 2.0
 
         # Check if premium store
         for store in self.PREMIUM_STORES:
@@ -219,10 +237,14 @@ class ProductScorer:
         """
         source_lower = source.lower().strip()
 
+        is_deprioritized = any(store in source_lower for store in self.DEPRIORITIZED_STORES)
         is_premium = any(store in source_lower for store in self.PREMIUM_STORES)
         is_trusted = any(store in source_lower for store in self.TRUSTED_STORES)
 
-        if is_premium:
+        if is_deprioritized:
+            tier = "C"
+            notes = "Not prominent in Singapore market"
+        elif is_premium:
             tier = "A+"
             notes = "Premium retailer with excellent reputation"
         elif is_trusted:
@@ -232,7 +254,7 @@ class ProductScorer:
             tier = "B"
             notes = "Unknown or less common retailer"
 
-        return {"is_known": is_trusted or is_premium, "reputation_tier": tier, "notes": notes}
+        return {"is_known": is_trusted or is_premium, "reputation_tier": tier, "notes": notes, "is_deprioritized": is_deprioritized}
 
 
 def calculate_price_analysis(products: List[Dict[str, Any]]) -> Dict[str, Any]:
