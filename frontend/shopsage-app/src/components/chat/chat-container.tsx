@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useCallback } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { MessageBubble } from "./message-bubble";
 import { ThinkingIndicator } from "./thinking-indicator";
@@ -34,10 +34,19 @@ export function ChatContainer({
   isLoadedChat = false,
 }: ChatContainerProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const userHasScrolledUp = useRef(false);
 
-  // Auto-scroll to bottom when new messages arrive
+  // Track whether the user has manually scrolled away from the bottom
+  const handleScroll = useCallback(() => {
+    if (!scrollRef.current) return;
+    const { scrollHeight, scrollTop, clientHeight } = scrollRef.current;
+    const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
+    userHasScrolledUp.current = distanceFromBottom > 150;
+  }, []);
+
+  // Auto-scroll to bottom only when the user hasn't scrolled up
   useEffect(() => {
-    if (scrollRef.current) {
+    if (scrollRef.current && !userHasScrolledUp.current) {
       scrollRef.current.scrollTo({
         top: scrollRef.current.scrollHeight,
         behavior: "smooth",
@@ -46,26 +55,18 @@ export function ChatContainer({
   }, [messages, isTyping]);
 
   const handleScrollToBottom = (options?: { force?: boolean; behavior?: ScrollBehavior }) => {
-    if (scrollRef.current) {
-      const { scrollHeight, scrollTop, clientHeight } = scrollRef.current;
-
-      // If force is true, use a larger threshold (e.g., 1000px) to account for large content appearing
-      // Otherwise use strict 100px threshold for typing
-      const threshold = options?.force ? 1000 : 100;
-      const isNearBottom = scrollHeight - scrollTop - clientHeight < threshold;
-
-      if (isNearBottom) {
-        scrollRef.current.scrollTo({
-          top: scrollHeight,
-          behavior: options?.behavior || "instant",
-        });
-      }
+    if (scrollRef.current && !userHasScrolledUp.current) {
+      scrollRef.current.scrollTo({
+        top: scrollRef.current.scrollHeight,
+        behavior: options?.behavior || "instant",
+      });
     }
   };
 
   return (
     <main
       ref={scrollRef}
+      onScroll={handleScroll}
       className="
         hide-scrollbar
         flex
