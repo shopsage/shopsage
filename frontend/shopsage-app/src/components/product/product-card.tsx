@@ -9,150 +9,90 @@ interface ProductCardProps {
 }
 
 export function ProductCard({ product, onTrack }: ProductCardProps) {
+  const isCheapest = product.badge === "Cheapest";
+
   return (
     <a
       href={product.url ?? undefined}
       target={product.url ? "_blank" : undefined}
       rel={product.url ? "noopener noreferrer" : undefined}
       className="
-        block
-        min-w-[260px]
-        cursor-pointer
-        rounded-[var(--radius-md)]
+        flex
+        items-center
+        gap-3
+        rounded-[var(--radius-sm)]
         border
         border-neutral-200/30
         bg-surface-card
-        p-3
+        p-2.5
         transition-all
-        duration-300
-        active:scale-[0.98]
+        duration-200
+        active:scale-[0.99]
         no-underline
       "
-      style={{
-        boxShadow: "var(--shadow-card)",
-      }}
+      style={{ boxShadow: "var(--shadow-card)" }}
     >
-      {/* Image Area */}
-      <div className="relative mb-3 flex h-[140px] items-center justify-center overflow-hidden rounded-xl bg-white shadow-sm border border-neutral-100">
-        {/* Badge — skip "Cheapest" since it's shown above the card by the carousel */}
-        {product.badge && product.badge !== "Cheapest" && (
-          <div
-            className="
-              glass
-              absolute
-              left-2
-              top-2
-              z-10
-              rounded-md
-              px-2
-              py-1
-              text-[10px]
-              font-bold
-              uppercase
-              tracking-wide
-              text-primary-500
-            "
-            style={{
-              boxShadow: "0 2px 8px rgba(0, 0, 0, 0.05)",
-            }}
-          >
-            {product.badge}
-          </div>
-        )}
-
-        {/* Product Image or Placeholder */}
+      {/* Thumbnail */}
+      <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-neutral-100 bg-white">
         {product.image ? (
           <img
             src={product.image}
             alt={product.title}
-            className="h-full w-full object-contain p-2"
+            className="h-full w-full object-contain p-1"
           />
         ) : (
-          <div
-            className="
-              relative
-              h-[60%]
-              w-[60%]
-              rounded-full
-              border-2
-              border-neutral-600
-              border-b-transparent
-            "
-          >
-            <div className="absolute -left-1.5 bottom-0 h-5 w-3 rounded bg-neutral-600" />
-            <div className="absolute -right-1.5 bottom-0 h-5 w-3 rounded bg-neutral-600" />
-          </div>
+          <div className="h-6 w-6 rounded-full border-2 border-neutral-400" />
         )}
       </div>
 
-      {/* Title */}
-      <h3
-        className="
-          mb-1
-          line-clamp-2
-          text-sm
-          font-semibold
-          leading-tight
-          text-neutral-800
-        "
-      >
-        {product.title}
-      </h3>
+      {/* Content */}
+      <div className="min-w-0 flex-1">
+        {/* Line 1: Title */}
+        <h3 className="truncate text-sm font-semibold leading-tight text-neutral-800">
+          {product.title}
+        </h3>
 
-      {/* Meta */}
-      <div className="mt-2 flex items-end justify-between">
-        <div>
+        {/* Line 2: Price · Rating · Seller · Cheapest tag */}
+        <div className="mt-1 flex items-center gap-2 text-xs">
           {/* Price */}
-          <div className="flex items-baseline gap-1">
-            <span className="text-base font-bold text-neutral-800">
-              ${product.price}
+          <span className="font-bold text-neutral-800">
+            ${product.price}
+          </span>
+
+          {product.originalPrice && (
+            <span className="text-neutral-400 line-through">
+              ${product.originalPrice}
             </span>
-            {product.originalPrice && (
-              <span className="text-xs font-normal text-neutral-500 line-through">
-                ${product.originalPrice}
-              </span>
-            )}
-          </div>
+          )}
+
+          {/* Divider */}
+          <span className="text-neutral-300">·</span>
 
           {/* Rating */}
-          <div className="mt-1 flex items-center gap-1 text-xs font-medium text-neutral-500">
+          <span className="flex items-center gap-0.5 text-neutral-500">
             <Star className="h-3 w-3 fill-warning text-warning" />
-            <span>{product.rating}</span>
-            <span>({product.reviewCount})</span>
-          </div>
+            {product.rating}
+          </span>
+
+          {/* Divider */}
+          <span className="text-neutral-300">·</span>
+
+          {/* Seller */}
+          <span className="truncate text-neutral-500">
+            {product.platform}
+          </span>
+
+          {/* Spacer + Cheapest tag */}
+          {isCheapest && (
+            <>
+              <span className="flex-1" />
+              <span className="shrink-0 rounded-full bg-emerald-500 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">
+                Cheapest
+              </span>
+            </>
+          )}
         </div>
-
-        {/* Platform */}
-        <span className="text-[11px] font-normal tracking-wide text-neutral-500">
-          {product.platform}
-        </span>
       </div>
-
-      {/* Optional Track Button */}
-      {onTrack && (
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onTrack(product);
-          }}
-          className="
-            mt-3
-            w-full
-            rounded-lg
-            bg-surface-bg
-            px-3
-            py-2.5
-            text-[13px]
-            font-semibold
-            text-neutral-800
-            transition-colors
-            duration-200
-            hover:bg-neutral-200
-          "
-        >
-          Track Price
-        </button>
-      )}
     </a>
   );
 }
