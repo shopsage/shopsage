@@ -29,10 +29,14 @@ class RouterState(TypedDict):
     # Control
     errors: List[str]
 
+    # User scoring preferences (normalised weights)
+    user_preferences: Optional[Dict[str, float]]
+
 
 def create_initial_state(
     messages: List[Dict[str, str]],
     latest_message: str,
+    user_preferences: Optional[Dict[str, float]] = None,
 ) -> RouterState:
     """Create initial state for the orchestrator"""
     return RouterState(
@@ -43,4 +47,5 @@ def create_initial_state(
         result=None,
         preferences=None,
         errors=[],
+        user_preferences=user_preferences,
     )

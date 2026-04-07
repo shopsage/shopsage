@@ -49,6 +49,9 @@ class AgentState(TypedDict):
     current_step: str
     processing_times: Dict[str, float]  # Track time for each step
 
+    # === User Preferences ===
+    user_preferences: Optional[Dict[str, float]]  # Normalised scoring weights
+
 
 def create_initial_state(
     user_query: str, max_results: int = 20, top_n: int = 5
@@ -85,4 +88,6 @@ def create_initial_state(
         warnings=[],
         current_step="initialized",
         processing_times={},
+        # User preferences
+        user_preferences=None,
     )

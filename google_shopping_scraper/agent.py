@@ -49,7 +49,8 @@ graph = create_supplier_research_graph()
 
 
 def run_research_agent(
-    query: str, max_results: int = 20, top_n: int = 5, config: dict = None
+    query: str, max_results: int = 20, top_n: int = 5, config: dict = None,
+    user_preferences: dict = None,
 ) -> dict:
     """
     Run the supplier research agent
@@ -59,12 +60,15 @@ def run_research_agent(
         max_results: Maximum number of search results to fetch
         top_n: Number of top recommendations to return
         config: Optional LangGraph configuration (for checkpointing, etc.)
+        user_preferences: Normalised scoring weights from user profile
 
     Returns:
         Final state dictionary with recommendations and metadata
     """
     # Create initial state
     initial_state = create_initial_state(query, max_results, top_n)
+    if user_preferences:
+        initial_state["user_preferences"] = user_preferences
 
     # Run the graph
     if config is None:

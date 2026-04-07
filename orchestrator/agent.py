@@ -77,6 +77,7 @@ def run_orchestrator(
     messages: Optional[List[Dict[str, str]]] = None,
     latest_message: str = "",
     config: Optional[dict] = None,
+    user_preferences: Optional[Dict[str, float]] = None,
 ) -> dict:
     """
     Run the orchestrator agent.
@@ -85,6 +86,7 @@ def run_orchestrator(
         messages: Full conversation history [{"role": "user"|"assistant", "content": "..."}]
         latest_message: The most recent user message (used for routing)
         config: Optional LangGraph configuration
+        user_preferences: Normalised scoring weights from user profile
 
     Returns:
         Final state dictionary with route, extracted_query, and result
@@ -99,7 +101,11 @@ def run_orchestrator(
                 latest_message = msg["content"]
                 break
 
-    initial_state = create_initial_state(messages=messages, latest_message=latest_message)
+    initial_state = create_initial_state(
+        messages=messages,
+        latest_message=latest_message,
+        user_preferences=user_preferences,
+    )
 
     if config is None:
         config = {"configurable": {"thread_id": "default"}}

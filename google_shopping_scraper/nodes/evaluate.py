@@ -46,13 +46,22 @@ def evaluate_products(state: AgentState) -> Dict[str, Any]:
             },
         }
 
-    # Initialize scorer with default weights
-    scorer = ProductScorer(
-        price_weight=0.40,
-        rating_weight=0.30,
-        reputation_weight=0.20,
-        review_count_weight=0.10,
-    )
+    # Initialize scorer — use user preferences when available, else defaults
+    user_prefs = state.get("user_preferences")
+    if user_prefs:
+        scorer = ProductScorer(
+            price_weight=user_prefs.get("price", 0.40),
+            rating_weight=user_prefs.get("rating", 0.30),
+            reputation_weight=user_prefs.get("reputation", 0.20),
+            review_count_weight=user_prefs.get("review_count", 0.10),
+        )
+    else:
+        scorer = ProductScorer(
+            price_weight=0.40,
+            rating_weight=0.30,
+            reputation_weight=0.20,
+            review_count_weight=0.10,
+        )
 
     # Extract all prices and review counts for normalization
     all_prices = [

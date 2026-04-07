@@ -11,10 +11,25 @@ import {
 import { apiFetch } from "@/lib/api";
 import React from "react";
 
+export interface UserPreferences {
+  price: number;
+  rating: number;
+  reputation: number;
+  review_count: number;
+}
+
+export const DEFAULT_PREFERENCES: UserPreferences = {
+  price: 5,
+  rating: 5,
+  reputation: 5,
+  review_count: 5,
+};
+
 interface AuthUser {
   id: string;
   email: string;
   display_name: string;
+  preferences: UserPreferences;
 }
 
 interface AuthContextValue {
@@ -24,6 +39,7 @@ interface AuthContextValue {
   login: (email: string, password: string) => Promise<void>;
   signup: (email: string, password: string, displayName: string) => Promise<void>;
   logout: () => void;
+  updatePreferences: (prefs: UserPreferences) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -142,9 +158,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  const updatePreferences = useCallback(async (prefs: UserPreferences) => {
+    const res = await apiFetch("/api/user/preferences", {
+      method: "PATCH",
+      body: JSON.stringify(prefs),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ detail: "Failed to save preferences" }));
+      throw new Error(err.detail || "Failed to save preferences");
+    }
+    const data = await res.json();
+    setUser(data);
+  }, []);
+
   return React.createElement(
     AuthContext.Provider,
-    { value: { user, token, isLoading, login, signup, logout } },
+    { value: { user, token, isLoading, login, signup, logout, updatePreferences } },
     children
   );
 }

@@ -117,6 +117,14 @@ class UserResponse(BaseModel):
     email: str
     display_name: str
     created_at: str
+    preferences: dict = {}
+
+
+class UpdatePreferencesRequest(BaseModel):
+    price: float = Field(5.0, ge=0, le=10, description="Price importance (0-10)")
+    rating: float = Field(5.0, ge=0, le=10, description="Rating importance (0-10)")
+    reputation: float = Field(5.0, ge=0, le=10, description="Store reputation importance (0-10)")
+    review_count: float = Field(5.0, ge=0, le=10, description="Review count importance (0-10)")
 
 
 class AuthResponse(BaseModel):
@@ -472,12 +480,7 @@ async def signup(body: SignupRequest, session: Session = Depends(get_session)):
     token = create_access_token(user.id)
     return AuthResponse(
         token=token,
-        user=UserResponse(
-            id=user.id,
-            email=user.email,
-            display_name=user.display_name,
-            created_at=user.created_at.isoformat(),
-        ),
+        user=_user_response(user),
     )
 
 
@@ -490,23 +493,78 @@ async def login(body: LoginRequest, session: Session = Depends(get_session)):
     token = create_access_token(user.id)
     return AuthResponse(
         token=token,
-        user=UserResponse(
-            id=user.id,
-            email=user.email,
-            display_name=user.display_name,
-            created_at=user.created_at.isoformat(),
-        ),
+        user=_user_response(user),
     )
 
 
 @app.get("/api/auth/me", response_model=UserResponse)
 async def get_me(user: User = Depends(get_current_user)):
+    return _user_response(user)
+
+
+def _user_response(user: User) -> UserResponse:
+    try:
+        prefs = json.loads(user.preferences) if user.preferences else {}
+    except (json.JSONDecodeError, TypeError):
+        prefs = {}
     return UserResponse(
         id=user.id,
         email=user.email,
         display_name=user.display_name,
         created_at=user.created_at.isoformat(),
+        preferences=prefs,
     )
+
+
+# ── User preferences ─────────────────────────────────────────────────────────
+
+DEFAULT_PREFERENCES = {
+    "price": 5.0,
+    "rating": 5.0,
+    "reputation": 5.0,
+    "review_count": 5.0,
+}
+
+
+def _parse_user_preferences(user: Optional[User]) -> dict:
+    """Parse user preferences JSON into a dict, falling back to defaults."""
+    if not user:
+        return dict(DEFAULT_PREFERENCES)
+    try:
+        prefs = json.loads(user.preferences) if user.preferences else {}
+    except (json.JSONDecodeError, TypeError):
+        prefs = {}
+    return {**DEFAULT_PREFERENCES, **prefs}
+
+
+def _preferences_to_weights(prefs: dict) -> dict:
+    """Convert 0-10 slider values to normalised weights that sum to 1.0."""
+    raw = {
+        "price": prefs.get("price", 5.0),
+        "rating": prefs.get("rating", 5.0),
+        "reputation": prefs.get("reputation", 5.0),
+        "review_count": prefs.get("review_count", 5.0),
+    }
+    total = sum(raw.values())
+    if total == 0:
+        # All sliders at zero → equal weights
+        return {"price": 0.25, "rating": 0.25, "reputation": 0.25, "review_count": 0.25}
+    return {k: v / total for k, v in raw.items()}
+
+
+@app.patch("/api/user/preferences", response_model=UserResponse)
+async def update_preferences(
+    body: UpdatePreferencesRequest,
+    user: User = Depends(get_current_user),
+    session: Session = Depends(get_session),
+):
+    """Update the current user's shopping preferences (slider values 0-10)."""
+    prefs = {"price": body.price, "rating": body.rating, "reputation": body.reputation, "review_count": body.review_count}
+    user.preferences = json.dumps(prefs)
+    session.add(user)
+    session.commit()
+    session.refresh(user)
+    return _user_response(user)
 
 
 # ── Chat endpoint (main integration point) ───────────────────────────────────
@@ -554,10 +612,15 @@ async def chat(
         # Convert Pydantic models to plain dicts for the orchestrator
         messages = [{"role": m.role, "content": m.content} for m in request.messages]
 
+        # Build scoring weights from user preferences
+        user_prefs = _parse_user_preferences(user)
+        scoring_weights = _preferences_to_weights(user_prefs)
+
         # Run the orchestrator
         state = run_orchestrator(
             messages=messages,
             latest_message=request.latest_message,
+            user_preferences=scoring_weights,
         )
 
         route = state.get("route", "product")

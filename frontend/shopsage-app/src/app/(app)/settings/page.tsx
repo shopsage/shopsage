@@ -1,9 +1,10 @@
 "use client";
 
-import { useAuth } from "@/hooks/use-auth";
+import { useAuth, DEFAULT_PREFERENCES, type UserPreferences } from "@/hooks/use-auth";
 import { useSavedProducts } from "@/hooks/use-saved-products";
-import { LogOut, Trash2, Search } from "lucide-react";
+import { LogOut, Trash2, Search, ChevronDown, SlidersHorizontal } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useState, useRef, useCallback, useEffect } from "react";
 
 function timeAgo(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime();
@@ -17,13 +18,87 @@ function timeAgo(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString();
 }
 
+const SLIDER_CONFIG: { key: keyof UserPreferences; label: string; description: string }[] = [
+  { key: "price", label: "Price", description: "How much cheaper prices matter to you" },
+  { key: "rating", label: "Rating", description: "How much product ratings influence results" },
+  { key: "reputation", label: "Store Reputation", description: "Preference for well-known, trusted stores" },
+  { key: "review_count", label: "Review Count", description: "Preference for products with more reviews" },
+];
+
+function PreferenceSlider({
+  label,
+  description,
+  value,
+  onChange,
+}: {
+  label: string;
+  description: string;
+  value: number;
+  onChange: (v: number) => void;
+}) {
+  const pct = (value / 10) * 100;
+  return (
+    <div className="space-y-1.5">
+      <div className="flex items-center justify-between">
+        <span className="text-sm font-medium text-neutral-700">{label}</span>
+        <span className="min-w-[2ch] text-right text-xs font-semibold text-primary-600">
+          {value}
+        </span>
+      </div>
+      <input
+        type="range"
+        min={0}
+        max={10}
+        step={1}
+        value={value}
+        onChange={(e) => onChange(Number(e.target.value))}
+        className="preference-slider w-full"
+        style={{ "--slider-pct": `${pct}%` } as React.CSSProperties}
+      />
+      <p className="text-[11px] text-neutral-400">{description}</p>
+    </div>
+  );
+}
+
 export default function SettingsPage() {
-  const { user, logout } = useAuth();
+  const { user, logout, updatePreferences } = useAuth();
   const { savedProducts, deleteProduct } = useSavedProducts();
   const router = useRouter();
+  const [prefsOpen, setPrefsOpen] = useState(false);
+  const [localPrefs, setLocalPrefs] = useState<UserPreferences>(DEFAULT_PREFERENCES);
+  const [saving, setSaving] = useState(false);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Sync local state when user loads
+  useEffect(() => {
+    if (user?.preferences) {
+      setLocalPrefs({ ...DEFAULT_PREFERENCES, ...user.preferences });
+    }
+  }, [user?.preferences]);
+
+  const handleSliderChange = useCallback(
+    (key: keyof UserPreferences, value: number) => {
+      setLocalPrefs((prev) => {
+        const next = { ...prev, [key]: value };
+        // Debounce the API save
+        if (debounceRef.current) clearTimeout(debounceRef.current);
+        debounceRef.current = setTimeout(async () => {
+          setSaving(true);
+          try {
+            await updatePreferences(next);
+          } catch {
+            // silently fail — local state is still updated
+          } finally {
+            setSaving(false);
+          }
+        }, 500);
+        return next;
+      });
+    },
+    [updatePreferences]
+  );
 
   const handleProductClick = (productName: string) => {
-    // Navigate to search and trigger a search for this product
     router.push(`/search?q=${encodeURIComponent(productName)}`);
   };
 
@@ -60,6 +135,47 @@ export default function SettingsPage() {
             <p className="text-sm text-neutral-500">Not signed in</p>
           )}
         </div>
+
+        {/* Shopping Preferences Section */}
+        {user && (
+          <div className="rounded-[var(--radius-md)] bg-surface-card shadow-card">
+            <button
+              onClick={() => setPrefsOpen((v) => !v)}
+              className="flex w-full items-center justify-between p-4"
+            >
+              <div className="flex items-center gap-2">
+                <SlidersHorizontal className="h-4 w-4 text-neutral-500" />
+                <h3 className="font-medium text-neutral-800">Shopping Preferences</h3>
+                {saving && (
+                  <span className="text-[11px] text-primary-500">Saving…</span>
+                )}
+              </div>
+              <ChevronDown
+                className={`h-4 w-4 text-neutral-400 transition-transform duration-200 ${
+                  prefsOpen ? "rotate-180" : ""
+                }`}
+              />
+            </button>
+
+            {prefsOpen && (
+              <div className="space-y-5 border-t border-neutral-100 px-4 pb-5 pt-4">
+                <p className="text-xs text-neutral-500">
+                  Adjust how search results are ranked. Higher values mean that
+                  factor matters more to you.
+                </p>
+                {SLIDER_CONFIG.map(({ key, label, description }) => (
+                  <PreferenceSlider
+                    key={key}
+                    label={label}
+                    description={description}
+                    value={localPrefs[key]}
+                    onChange={(v) => handleSliderChange(key, v)}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Saved Products Section */}
         <div className="rounded-[var(--radius-md)] bg-surface-card p-4 shadow-card">

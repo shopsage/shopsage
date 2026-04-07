@@ -15,9 +15,10 @@ def run_supplier(state: Dict[str, Any]) -> Dict[str, Any]:
         State update with result from supplier agent
     """
     query = state.get("extracted_query", "")
+    user_preferences = state.get("user_preferences")
 
     try:
-        result = run_research_agent(query=query, max_results=20, top_n=5)
+        result = run_research_agent(query=query, max_results=20, top_n=5, user_preferences=user_preferences)
         return {"result": result}
     except Exception as e:
         return {
